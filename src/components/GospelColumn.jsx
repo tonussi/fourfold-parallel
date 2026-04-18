@@ -83,14 +83,14 @@ export default function GospelColumn({ gospel, reference, verses }) {
       </div>
 
       {/* Verses Content */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin p-4">
+      <div className="flex-1 overflow-y-auto scrollbar-thin p-3 sm:p-4">
         {verses.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {verses.map((verse, index) => (
               <p
                 key={verse.verse}
                 className={`
-                  verse-text text-[15px] leading-[1.8]
+                  verse-text text-[14px] sm:text-[15px] leading-[1.7] sm:leading-[1.8]
                   ${index > 0 ? 'pt-3 border-t border-slate-100 dark:border-slate-800/50' : ''}
                 `}
               >
@@ -104,7 +104,7 @@ export default function GospelColumn({ gospel, reference, verses }) {
             ))}
           </div>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center p-6">
+          <div className="h-full flex flex-col items-center justify-center text-center p-4 sm:p-6">
             <div className={`p-4 rounded-full ${config.iconBg} mb-4`}>
               <ScrollText className={config.iconColor} size={32} />
             </div>

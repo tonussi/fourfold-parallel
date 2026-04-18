@@ -15,14 +15,33 @@
 @layer base {
   * {
     transition: colors 200ms;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  html {
+    /* Safe area support for notched devices */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   
   body {
     @apply bg-slate-50 text-slate-900 font-sans antialiased;
+    /* Prevent pull-to-refresh on mobile */
+    overscroll-behavior-y: contain;
   }
   
   html.dark body {
     @apply bg-slate-950 text-slate-100;
+  }
+  
+  /* Improved touch targets on mobile */
+  @media (max-width: 768px) {
+    button, a {
+      min-height: 44px;
+      min-width: 44px;
+    }
   }
 }
 
@@ -72,5 +91,37 @@
   
   html.dark .gospel-header {
     @apply border-slate-700;
+  }
+}
+
+@layer utilities {
+  /* Safe area padding for bottom navigation */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  /* Mobile-first text selection */
+  .select-none-mobile {
+    @apply select-none md:select-text;
+  }
+  
+  /* Smooth scrolling with momentum on mobile */
+  .momentum-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Hide scrollbar on mobile webkit */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

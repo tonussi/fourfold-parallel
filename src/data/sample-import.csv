@@ -1,0 +1,4 @@
+section_id,section_title,gospel,reference,verses_json
+sermon-mount,The Sermon on the Mount,matthew,Matthew 5:1-2,"[{\"verse\":1,\"text\":\"And seeing the multitudes, he went up into a mountain: and when he was set, his disciples came unto him:\"},{\"verse\":2,\"text\":\"And he opened his mouth, and taught them, saying,\"}]"
+sermon-mount,The Sermon on the Mount,luke,Luke 6:20,"[{\"verse\":20,\"text\":\"And he lifted up his eyes on his disciples, and said, Blessed be ye poor: for yours is the kingdom of God.\"}]"
+bread-of-life,The Bread of Life,john,John 6:35,"[{\"verse\":35,\"text\":\"And Jesus said unto them, I am the bread of life: he that cometh to me shall never hunger; and he that believeth on me shall never thirst.\"}]"
