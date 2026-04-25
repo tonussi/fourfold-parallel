@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, ArrowLeft, BookOpen, X, Loader2 } from 'lucide-react'
 import {
   parseReference,
-  BOOKS,
+  BOOKS_PROTESTANT,
   BibleVersionEnum,
   fetchVerses,
   searchVersesByText,
@@ -97,7 +97,8 @@ export default function SearchPage() {
     console.log(verseList)
 
     for (const verse of verseList) {
-      const bookName = verse.bookName || BOOKS[verse.book] || 'Desconhecido'
+      const bookName =
+        verse.bookName || BOOKS_PROTESTANT[verse.book] || 'Desconhecido'
       const key = `${bookName}-${verse.chapter}`
 
       if (!groups[key]) {

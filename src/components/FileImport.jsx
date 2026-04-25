@@ -41,6 +41,15 @@ export default function FileImport({ onImport }) {
 
   const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
 
+  const normalizeVerses = (versesStr) => {
+    if (!versesStr || typeof versesStr !== 'string') return ''
+    return versesStr
+      .split(/[;\r?\n]+/)
+      .map((v) => v.trim())
+      .filter((v) => v)
+      .join(';')
+  }
+
   // Parse a single verse range like "1:5" or "1:5-10"
   const parseSingleVerseRange = (rangeStr) => {
     const match = rangeStr.trim().match(/^(\d+):(\d+)(?:-(\d+))?$/)
@@ -53,14 +62,14 @@ export default function FileImport({ onImport }) {
     }
   }
 
-  // Parse verses format supporting multiple ranges separated by newlines
-  // e.g., "10:1\n10:7-11\n10:14" or "3:7-10\n3:11-12"
+  // Parse verses format supporting multiple ranges separated by semicolons or newlines
+  // e.g., "10:1;10:7-11;10:14" or "3:7-10\n3:11-12"
   const parseVersesFormat = (gospel, versesStr) => {
     if (!versesStr) return { reference: '', ranges: [] }
 
-    // Split by newlines to handle multiple verse references
+    // Split by semicolons or newlines to handle multiple verse references
     const lines = versesStr
-      .split(/\r?\n/)
+      .split(/[;\r?\n]+/)
       .map((l) => l.trim())
       .filter((l) => l)
     const bookName = capitalize(gospel)
@@ -81,7 +90,7 @@ export default function FileImport({ onImport }) {
         ? `${r.chapter}:${r.startVerse}`
         : `${r.chapter}:${r.startVerse}-${r.endVerse}`
     )
-    const reference = `${bookName} ${rangeStrs.join(', ')}`
+    const reference = `${bookName} ${rangeStrs.join(';')}`
 
     return { reference, ranges }
   }
@@ -131,13 +140,14 @@ export default function FileImport({ onImport }) {
       data.sections.map(async (section) => {
         const passagesWithVerses = await Promise.all(
           section.passages.map(async (passage) => {
-            if (!passage.verses) {
+            const normalizedVersesStr = normalizeVerses(passage.verses)
+            if (!normalizedVersesStr) {
               return { ...passage, reference: '', verses: [] }
             }
 
             const { reference, verses } = await fetchVerseContent(
               passage.gospel,
-              passage.verses,
+              normalizedVersesStr,
               version
             )
 
@@ -193,138 +203,78 @@ export default function FileImport({ onImport }) {
   }
 
   const parseCSV = (content) => {
-    const lines = content
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line)
-    if (lines.length < 2)
-      throw new Error('CSV needs at least a header row and one data row')
+    const rows = []
+    let currentColumn = ''
+    let inQuotes = false
+    let currentRow = []
 
-    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase())
+    for (let i = 0; i < content.length; i++) {
+      const char = content[i]
+      const nextChar = content[i + 1]
 
-    // Check for new format: Title, Matthew, Mark, Luke, John
-    const newFormatCols = ['title', 'matthew', 'mark', 'luke', 'john']
-    const hasNewFormat = newFormatCols.every((col) => headers.includes(col))
-
-    // Check for old format: section_id, section_title, gospel, verses
-    const oldFormatCols = ['section_id', 'section_title', 'gospel']
-    const hasOldFormat = oldFormatCols.every((col) => headers.includes(col))
-
-    if (!hasNewFormat && !hasOldFormat) {
-      throw new Error(
-        'CSV must have columns: Title, Matthew, Mark, Luke, John (or legacy: section_id, section_title, gospel, verses)'
-      )
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          currentColumn += '"'
+          i++
+        } else {
+          inQuotes = !inQuotes
+        }
+      } else if (char === ',' && !inQuotes) {
+        currentRow.push(currentColumn)
+        currentColumn = ''
+      } else if ((char === '\r' || char === '\n') && !inQuotes) {
+        if (char === '\r' && nextChar === '\n') i++
+        currentRow.push(currentColumn)
+        if (currentRow.some((c) => c.trim() !== '') || currentRow.length > 1) {
+          rows.push(currentRow)
+        }
+        currentRow = []
+        currentColumn = ''
+      } else {
+        currentColumn += char
+      }
+    }
+    if (currentRow.length > 0 || currentColumn !== '') {
+      currentRow.push(currentColumn)
+      rows.push(currentRow)
     }
 
-    const gospels = ['matthew', 'mark', 'luke', 'john']
+    if (rows.length < 2)
+      throw new Error('CSV needs at least a header row and one data row')
+
+    const headers = rows[0].map((h) => h.trim().toLowerCase())
     const sections = []
 
-    if (hasNewFormat) {
-      // New format: each row has Title, Matthew, Mark, Luke, John columns
-      const titleIdx = headers.indexOf('title')
-      const matthewIdx = headers.indexOf('matthew')
-      const markIdx = headers.indexOf('mark')
-      const lukeIdx = headers.indexOf('luke')
-      const johnIdx = headers.indexOf('john')
+    // New format: each row has Title, Matthew, Mark, Luke, John columns
+    const titleIdx = headers.indexOf('title')
+    const matthewIdx = headers.indexOf('matthew')
+    const markIdx = headers.indexOf('mark')
+    const lukeIdx = headers.indexOf('luke')
+    const johnIdx = headers.indexOf('john')
 
-      for (let i = 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i])
+    for (let i = 1; i < rows.length; i++) {
+      const values = rows[i]
+      const sectionTitle = values[titleIdx]?.trim() || ''
+      if (!sectionTitle) continue
 
-        const sectionTitle = values[titleIdx]?.trim() || ''
-        if (!sectionTitle) continue
+      const sectionId = `section-${i}`
 
-        const sectionId = `section-${i}`
-
-        sections.push({
-          id: sectionId,
-          title: sectionTitle,
-          passages: [
-            { gospel: 'matthew', verses: values[matthewIdx]?.trim() || '' },
-            { gospel: 'mark', verses: values[markIdx]?.trim() || '' },
-            { gospel: 'luke', verses: values[lukeIdx]?.trim() || '' },
-            { gospel: 'john', verses: values[johnIdx]?.trim() || '' },
-          ],
-        })
-      }
-    } else {
-      // Legacy format: multiple rows per section
-      const sectionMap = new Map()
-
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map((v) => v.trim())
-        const row = {}
-        headers.forEach((h, idx) => {
-          row[h] = values[idx] || ''
-        })
-
-        const sectionId = row.section_id
-        const sectionTitle = row.section_title
-        const gospel = row.gospel.toLowerCase()
-        const verses = row.verses || ''
-
-        if (!sectionMap.has(sectionId)) {
-          sectionMap.set(sectionId, {
-            id: sectionId,
-            title: sectionTitle,
-            passages: [],
-          })
-        }
-
-        sectionMap.get(sectionId).passages.push({
-          gospel,
-          verses,
-        })
-      }
-
-      // Ensure all 4 gospels exist for each section
-      for (const section of sectionMap.values()) {
-        const existingGospels = new Set(section.passages.map((p) => p.gospel))
-        for (const g of gospels) {
-          if (!existingGospels.has(g)) {
-            section.passages.push({ gospel: g, verses: '' })
-          }
-        }
-        // Sort passages by gospel order
-        section.passages.sort(
-          (a, b) => gospels.indexOf(a.gospel) - gospels.indexOf(b.gospel)
-        )
-        sections.push(section)
-      }
+      sections.push({
+        id: sectionId,
+        title: sectionTitle,
+        passages: [
+          { gospel: 'matthew', verses: normalizeVerses(values[matthewIdx]) },
+          { gospel: 'mark', verses: normalizeVerses(values[markIdx]) },
+          { gospel: 'luke', verses: normalizeVerses(values[lukeIdx]) },
+          { gospel: 'john', verses: normalizeVerses(values[johnIdx]) },
+        ],
+      })
     }
 
     return {
       title: 'Custom Parallel Reading',
       sections,
     }
-  }
-
-  // Parse a CSV line handling quoted values with commas and newlines
-  const parseCSVLine = (line) => {
-    const values = []
-    let current = ''
-    let inQuotes = false
-
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i]
-      const nextChar = line[i + 1]
-
-      if (char === '"') {
-        if (inQuotes && nextChar === '"') {
-          current += '"'
-          i++ // Skip next quote
-        } else {
-          inQuotes = !inQuotes
-        }
-      } else if (char === ',' && !inQuotes) {
-        values.push(current.trim())
-        current = ''
-      } else {
-        current += char
-      }
-    }
-    values.push(current.trim())
-
-    return values
   }
 
   const processTextInput = async () => {

@@ -5,7 +5,13 @@ import SectionNav from './components/SectionNav'
 import GospelColumn from './components/GospelColumn'
 import MobileGospelTabs from './components/MobileGospelTabs'
 import FileImport from './components/FileImport'
-import { parseReference, LABELS, BOOKS, BibleVersionEnum, fetchVerses } from './verses'
+import {
+  parseReference,
+  LABELS,
+  BOOKS_PROTESTANT,
+  BibleVersionEnum,
+  fetchVerses,
+} from './verses'
 import { Search } from 'lucide-react'
 import parallelData from './data/parallelVerses.json'
 import './App.css'
@@ -84,7 +90,7 @@ function processVerseReference(reference) {
 function getBookDisplayTitle(gospel) {
   const bookNum =
     LABELS[gospel] || LABELS[gospel.charAt(0).toUpperCase() + gospel.slice(1)]
-  return bookNum ? BOOKS[bookNum] : gospel
+  return bookNum ? BOOKS_PROTESTANT[bookNum] : gospel
 }
 
 function ParallelReader() {
@@ -134,7 +140,10 @@ function ParallelReader() {
                 }))
               }
             } catch (err) {
-              console.error(`Failed to fetch verses for ${passage.gospel}:`, err)
+              console.error(
+                `Failed to fetch verses for ${passage.gospel}:`,
+                err
+              )
             }
           })
         )
@@ -217,7 +226,9 @@ function ParallelReader() {
     // Use verses library to get book display name
     const bookTitle = getBookDisplayTitle(gospel)
 
-    const passage = currentSection.passages.find((p) => p.gospel === gospel) || {
+    const passage = currentSection.passages.find(
+      (p) => p.gospel === gospel
+    ) || {
       gospel,
       reference: '',
       verses: [],
