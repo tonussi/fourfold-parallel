@@ -5,7 +5,7 @@ import SectionNav from './components/SectionNav'
 import GospelColumn from './components/GospelColumn'
 import MobileGospelTabs from './components/MobileGospelTabs'
 import FileImport from './components/FileImport'
-import { parseReference, LABELS, BOOKS, BibleVersionEnum } from './verses'
+import { parseReference, LABELS, BOOKS, BibleVersionEnum, fetchVerses } from './verses'
 import { Search } from 'lucide-react'
 import parallelData from './data/parallelVerses.json'
 import './App.css'
@@ -93,6 +93,8 @@ function ParallelReader() {
   const [importedData, setImportedData] = useState(null)
   const [activeGospelTab, setActiveGospelTab] = useState('matthew')
   const [isMobile, setIsMobile] = useState(false)
+  const [sectionVerses, setSectionVerses] = useState({})
+  const [isLoadingVerses, setIsLoadingVerses] = useState(false)
   const { sections } = parallelData
 
   // Detect mobile viewport
@@ -107,6 +109,51 @@ function ParallelReader() {
   const displayData = importedData || transformData(parallelData)
   const displaySections = displayData.sections
   const currentSection = displaySections[currentSectionIndex]
+
+  const loadVerses = useCallback(
+    async (section) => {
+      if (!section?.passages) return
+      setIsLoadingVerses(true)
+      const newVerses = {}
+
+      try {
+        // We iterate through all gospels in parallel
+        await Promise.all(
+          section.passages.map(async (passage) => {
+            if (!passage.reference) return
+
+            try {
+              // The API returns an object like { "ACF": [...], "BYZ": [...] }
+              const result = await fetchVerses(passage.reference, 'ACF')
+              // Use ACF by default as shown in the user's example format
+              const versionData = result.data?.ACF || result.ACF
+              if (versionData && Array.isArray(versionData)) {
+                newVerses[passage.gospel] = versionData.map((v) => ({
+                  verse: v.verse,
+                  text: v.scripture,
+                }))
+              }
+            } catch (err) {
+              console.error(`Failed to fetch verses for ${passage.gospel}:`, err)
+            }
+          })
+        )
+        setSectionVerses(newVerses)
+      } catch (error) {
+        console.error('Error loading section verses:', error)
+      } finally {
+        setIsLoadingVerses(false)
+      }
+    },
+    [fetchVerses]
+  )
+
+  // Initial load
+  useEffect(() => {
+    if (displaySections && displaySections[currentSectionIndex]) {
+      loadVerses(displaySections[currentSectionIndex])
+    }
+  }, [])
 
   // Log verses library usage for demonstration
   useEffect(() => {
@@ -129,13 +176,17 @@ function ParallelReader() {
 
   const handlePrev = () => {
     if (currentSectionIndex > 0) {
-      setCurrentSectionIndex((prev) => prev - 1)
+      const nextIdx = currentSectionIndex - 1
+      setCurrentSectionIndex(nextIdx)
+      loadVerses(displaySections[nextIdx])
     }
   }
 
   const handleNext = () => {
     if (currentSectionIndex < displaySections.length - 1) {
-      setCurrentSectionIndex((prev) => prev + 1)
+      const nextIdx = currentSectionIndex + 1
+      setCurrentSectionIndex(nextIdx)
+      loadVerses(displaySections[nextIdx])
     }
   }
 
@@ -166,20 +217,18 @@ function ParallelReader() {
     // Use verses library to get book display name
     const bookTitle = getBookDisplayTitle(gospel)
 
-    const passage = currentSection.passages.find(
-      (p) => p.gospel === gospel
-    ) || {
+    const passage = currentSection.passages.find((p) => p.gospel === gospel) || {
       gospel,
       reference: '',
       verses: [],
     }
 
-    // Process reference using verses library
-    if (passage.reference) {
-      const parsed = processVerseReference(passage.reference)
-      console.log(
-        `@verses lib: ${passage.reference} for ${gospel} (Book #${parsed?.book})`
-      )
+    // Merge fetched verses if available
+    if (sectionVerses[gospel]) {
+      return {
+        ...passage,
+        verses: sectionVerses[gospel],
+      }
     }
 
     return passage
