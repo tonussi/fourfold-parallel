@@ -12,6 +12,23 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    setupFiles: ['./src/test-setup.js'],
+    include: ['src/**/*.test.js', 'src/**/*.test.jsx'],
+    coverage: {
+      reporter: ['text', 'json', 'html'],
+      exclude: ['node_modules/', 'src/**/*.test.js']
+    }
   }
 })

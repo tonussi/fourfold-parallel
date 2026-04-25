@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, List } from 'lucide-react'
 
-export default function SectionNav({ sections, currentIndex, onSelect, onPrev, onNext }) {
+export default function SectionNav({
+  sections,
+  currentIndex,
+  onSelect,
+  onPrev,
+  onNext,
+}) {
   const currentSection = sections[currentIndex]
 
   return (
@@ -124,7 +130,9 @@ export default function SectionNav({ sections, currentIndex, onSelect, onPrev, o
           <div className="max-w-md mx-auto mt-4 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-indigo-600 dark:bg-indigo-400 transition-all duration-300 rounded-full"
-              style={{ width: `${((currentIndex + 1) / sections.length) * 100}%` }}
+              style={{
+                width: `${((currentIndex + 1) / sections.length) * 100}%`,
+              }}
             />
           </div>
         </div>

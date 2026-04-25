@@ -1,15 +1,168 @@
 import { useState, useRef } from 'react'
-import { Upload, FileJson, FileSpreadsheet, AlertCircle, Check, X } from 'lucide-react'
+import {
+  Upload,
+  FileJson,
+  FileSpreadsheet,
+  AlertCircle,
+  Check,
+  X,
+  Edit3,
+  Loader2,
+} from 'lucide-react'
+import { fetchVerses } from '../verses'
 
 export default function FileImport({ onImport }) {
   const [dragActive, setDragActive] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [showTextInput, setShowTextInput] = useState(false)
+  const [textInputMode, setTextInputMode] = useState(null) // 'json' or 'csv'
+  const [textContent, setTextContent] = useState('')
   const fileInputRef = useRef(null)
 
   const resetStatus = () => {
     setError(null)
     setSuccess(null)
+  }
+
+  const openTextInput = (mode) => {
+    setTextInputMode(mode)
+    setTextContent('')
+    setShowTextInput(true)
+    resetStatus()
+  }
+
+  const closeTextInput = () => {
+    setShowTextInput(false)
+    setTextInputMode(null)
+    setTextContent('')
+  }
+
+  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
+
+  // Parse a single verse range like "1:5" or "1:5-10"
+  const parseSingleVerseRange = (rangeStr) => {
+    const match = rangeStr.trim().match(/^(\d+):(\d+)(?:-(\d+))?$/)
+    if (!match) return null
+
+    return {
+      chapter: parseInt(match[1], 10),
+      startVerse: parseInt(match[2], 10),
+      endVerse: match[3] ? parseInt(match[3], 10) : parseInt(match[2], 10),
+    }
+  }
+
+  // Parse verses format supporting multiple ranges separated by newlines
+  // e.g., "10:1\n10:7-11\n10:14" or "3:7-10\n3:11-12"
+  const parseVersesFormat = (gospel, versesStr) => {
+    if (!versesStr) return { reference: '', ranges: [] }
+
+    // Split by newlines to handle multiple verse references
+    const lines = versesStr
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l)
+    const bookName = capitalize(gospel)
+    const ranges = []
+
+    for (const line of lines) {
+      const parsed = parseSingleVerseRange(line)
+      if (parsed) {
+        ranges.push(parsed)
+      }
+    }
+
+    if (ranges.length === 0) return { reference: '', ranges: [] }
+
+    // Build reference string from all ranges
+    const rangeStrs = ranges.map((r) =>
+      r.startVerse === r.endVerse
+        ? `${r.chapter}:${r.startVerse}`
+        : `${r.chapter}:${r.startVerse}-${r.endVerse}`
+    )
+    const reference = `${bookName} ${rangeStrs.join(', ')}`
+
+    return { reference, ranges }
+  }
+
+  // Fetch verse content from API
+  const fetchVerseContent = async (gospel, versesStr, version = 'ACF') => {
+    const { reference, ranges } = parseVersesFormat(gospel, versesStr)
+
+    if (!reference || ranges.length === 0) {
+      return { reference: '', verses: [] }
+    }
+
+    const allVerses = []
+
+    for (const range of ranges) {
+      const rangeRef =
+        range.startVerse === range.endVerse
+          ? `${range.chapter}:${range.startVerse}`
+          : `${range.chapter}:${range.startVerse}-${range.endVerse}`
+      const fullRef = `${capitalize(gospel)} ${rangeRef}`
+
+      try {
+        const data = await fetchVerses(fullRef, version)
+        if (data.verses && data.verses.length > 0) {
+          allVerses.push(...data.verses)
+        } else {
+          // Fallback: generate empty verses for this range
+          for (let v = range.startVerse; v <= range.endVerse; v++) {
+            allVerses.push({ verse: v, text: '[Verse text unavailable]' })
+          }
+        }
+      } catch (err) {
+        console.warn(`Failed to fetch verses for ${fullRef}:`, err)
+        // Fallback: generate empty verses for this range
+        for (let v = range.startVerse; v <= range.endVerse; v++) {
+          allVerses.push({ verse: v, text: '[Verse text unavailable]' })
+        }
+      }
+    }
+
+    return { reference, verses: allVerses }
+  }
+
+  // Transform imported data to include full verse arrays with fetched content
+  const transformImportData = async (data, version = 'ACF') => {
+    const transformedSections = await Promise.all(
+      data.sections.map(async (section) => {
+        const passagesWithVerses = await Promise.all(
+          section.passages.map(async (passage) => {
+            if (!passage.verses) {
+              return { ...passage, reference: '', verses: [] }
+            }
+
+            const { reference, verses } = await fetchVerseContent(
+              passage.gospel,
+              passage.verses,
+              version
+            )
+
+            return {
+              ...passage,
+              reference,
+              verses:
+                verses.length > 0
+                  ? verses.map((v) => ({ verse: v.verse, text: v.text }))
+                  : [],
+            }
+          })
+        )
+
+        return {
+          ...section,
+          passages: passagesWithVerses,
+        }
+      })
+    )
+
+    return {
+      ...data,
+      sections: transformedSections,
+    }
   }
 
   const validateStructure = (data) => {
@@ -25,90 +178,202 @@ export default function FileImport({ onImport }) {
         return { valid: false, error: 'Each section needs an "id" and "title"' }
       }
       if (!Array.isArray(section.passages)) {
-        return { valid: false, error: `Section "${section.title}" needs a "passages" array` }
+        return {
+          valid: false,
+          error: `Section "${section.title}" needs a "passages" array`,
+        }
+      }
+      for (const passage of section.passages) {
+        if (!passage.gospel) {
+          return { valid: false, error: 'Each passage needs a "gospel" field' }
+        }
       }
     }
     return { valid: true }
   }
 
   const parseCSV = (content) => {
-    const lines = content.split('\n').map(line => line.trim()).filter(line => line)
-    if (lines.length < 2) throw new Error('CSV needs at least a header row and one data row')
+    const lines = content
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line)
+    if (lines.length < 2)
+      throw new Error('CSV needs at least a header row and one data row')
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
-    const requiredCols = ['section_id', 'section_title', 'gospel']
-    const missing = requiredCols.filter(col => !headers.includes(col))
-    if (missing.length > 0) {
-      throw new Error(`CSV missing required columns: ${missing.join(', ')}`)
+    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase())
+
+    // Check for new format: Title, Matthew, Mark, Luke, John
+    const newFormatCols = ['title', 'matthew', 'mark', 'luke', 'john']
+    const hasNewFormat = newFormatCols.every((col) => headers.includes(col))
+
+    // Check for old format: section_id, section_title, gospel, verses
+    const oldFormatCols = ['section_id', 'section_title', 'gospel']
+    const hasOldFormat = oldFormatCols.every((col) => headers.includes(col))
+
+    if (!hasNewFormat && !hasOldFormat) {
+      throw new Error(
+        'CSV must have columns: Title, Matthew, Mark, Luke, John (or legacy: section_id, section_title, gospel, verses)'
+      )
     }
 
-    // Build structure from CSV rows
-    const sections = new Map()
-    
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim())
-      const row = {}
-      headers.forEach((h, idx) => {
-        row[h] = values[idx] || ''
-      })
+    const gospels = ['matthew', 'mark', 'luke', 'john']
+    const sections = []
 
-      const sectionId = row.section_id
-      const sectionTitle = row.section_title
-      const gospel = row.gospel.toLowerCase()
-      const reference = row.reference || ''
-      
-      // Parse verses - either from verses_json column or single verse_text column
-      let verses = []
-      if (row.verses_json) {
-        try {
-          verses = JSON.parse(row.verses_json)
-        } catch {
-          // If not valid JSON, treat as empty
-        }
-      } else if (row.verse_text && row.verse_num) {
-        verses = [{ verse: parseInt(row.verse_num) || 1, text: row.verse_text }]
-      }
+    if (hasNewFormat) {
+      // New format: each row has Title, Matthew, Mark, Luke, John columns
+      const titleIdx = headers.indexOf('title')
+      const matthewIdx = headers.indexOf('matthew')
+      const markIdx = headers.indexOf('mark')
+      const lukeIdx = headers.indexOf('luke')
+      const johnIdx = headers.indexOf('john')
 
-      if (!sections.has(sectionId)) {
-        sections.set(sectionId, {
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i])
+
+        const sectionTitle = values[titleIdx]?.trim() || ''
+        if (!sectionTitle) continue
+
+        const sectionId = `section-${i}`
+
+        sections.push({
           id: sectionId,
           title: sectionTitle,
-          passages: []
+          passages: [
+            { gospel: 'matthew', verses: values[matthewIdx]?.trim() || '' },
+            { gospel: 'mark', verses: values[markIdx]?.trim() || '' },
+            { gospel: 'luke', verses: values[lukeIdx]?.trim() || '' },
+            { gospel: 'john', verses: values[johnIdx]?.trim() || '' },
+          ],
+        })
+      }
+    } else {
+      // Legacy format: multiple rows per section
+      const sectionMap = new Map()
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map((v) => v.trim())
+        const row = {}
+        headers.forEach((h, idx) => {
+          row[h] = values[idx] || ''
+        })
+
+        const sectionId = row.section_id
+        const sectionTitle = row.section_title
+        const gospel = row.gospel.toLowerCase()
+        const verses = row.verses || ''
+
+        if (!sectionMap.has(sectionId)) {
+          sectionMap.set(sectionId, {
+            id: sectionId,
+            title: sectionTitle,
+            passages: [],
+          })
+        }
+
+        sectionMap.get(sectionId).passages.push({
+          gospel,
+          verses,
         })
       }
 
-      sections.get(sectionId).passages.push({
-        gospel,
-        reference,
-        verses
-      })
-    }
-
-    // Ensure all 4 gospels exist for each section
-    const gospels = ['matthew', 'mark', 'luke', 'john']
-    for (const section of sections.values()) {
-      const existingGospels = new Set(section.passages.map(p => p.gospel))
-      for (const g of gospels) {
-        if (!existingGospels.has(g)) {
-          section.passages.push({ gospel: g, reference: '', verses: [] })
+      // Ensure all 4 gospels exist for each section
+      for (const section of sectionMap.values()) {
+        const existingGospels = new Set(section.passages.map((p) => p.gospel))
+        for (const g of gospels) {
+          if (!existingGospels.has(g)) {
+            section.passages.push({ gospel: g, verses: '' })
+          }
         }
+        // Sort passages by gospel order
+        section.passages.sort(
+          (a, b) => gospels.indexOf(a.gospel) - gospels.indexOf(b.gospel)
+        )
+        sections.push(section)
       }
-      // Sort passages by gospel order
-      section.passages.sort((a, b) => gospels.indexOf(a.gospel) - gospels.indexOf(b.gospel))
     }
 
     return {
       title: 'Custom Parallel Reading',
-      sections: Array.from(sections.values())
+      sections,
+    }
+  }
+
+  // Parse a CSV line handling quoted values with commas and newlines
+  const parseCSVLine = (line) => {
+    const values = []
+    let current = ''
+    let inQuotes = false
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i]
+      const nextChar = line[i + 1]
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          current += '"'
+          i++ // Skip next quote
+        } else {
+          inQuotes = !inQuotes
+        }
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim())
+        current = ''
+      } else {
+        current += char
+      }
+    }
+    values.push(current.trim())
+
+    return values
+  }
+
+  const processTextInput = async () => {
+    if (!textContent.trim()) {
+      setError('Please enter some content')
+      return
+    }
+
+    setLoading(true)
+    resetStatus()
+
+    try {
+      let data
+      if (textInputMode === 'json') {
+        const rawData = JSON.parse(textContent)
+        const validation = validateStructure(rawData)
+        if (!validation.valid) {
+          throw new Error(validation.error)
+        }
+        data = await transformImportData(rawData)
+      } else {
+        const csvData = parseCSV(textContent)
+        const validation = validateStructure(csvData)
+        if (!validation.valid) {
+          throw new Error(validation.error)
+        }
+        data = await transformImportData(csvData)
+      }
+
+      setSuccess(
+        `Successfully loaded "${data.title}" with ${data.sections.length} section(s)`
+      )
+      onImport(data)
+      closeTextInput()
+    } catch (err) {
+      setError(err.message || `Failed to parse ${textInputMode.toUpperCase()}`)
+    } finally {
+      setLoading(false)
     }
   }
 
   const processFile = async (file) => {
     resetStatus()
-    
+    setLoading(true)
+
     const extension = file.name.split('.').pop().toLowerCase()
     if (!['json', 'csv'].includes(extension)) {
       setError('Please upload a .json or .csv file')
+      setLoading(false)
       return
     }
 
@@ -117,21 +382,29 @@ export default function FileImport({ onImport }) {
       let data
 
       if (extension === 'json') {
-        data = JSON.parse(content)
+        const rawData = JSON.parse(content)
+        const validation = validateStructure(rawData)
+        if (!validation.valid) {
+          throw new Error(validation.error)
+        }
+        data = await transformImportData(rawData)
       } else {
-        data = parseCSV(content)
+        const csvData = parseCSV(content)
+        const validation = validateStructure(csvData)
+        if (!validation.valid) {
+          throw new Error(validation.error)
+        }
+        data = await transformImportData(csvData)
       }
 
-      const validation = validateStructure(data)
-      if (!validation.valid) {
-        setError(validation.error)
-        return
-      }
-
-      setSuccess(`Successfully loaded "${data.title}" with ${data.sections.length} section(s)`)
+      setSuccess(
+        `Successfully loaded "${data.title}" with ${data.sections.length} section(s)`
+      )
       onImport(data)
     } catch (err) {
       setError(err.message || 'Failed to parse file')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -170,14 +443,16 @@ export default function FileImport({ onImport }) {
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !loading && fileInputRef.current?.click()}
         className={`
           relative cursor-pointer rounded-xl border-2 border-dashed p-8
           transition-colors duration-200 flex flex-col items-center gap-3
-          ${dragActive 
-            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' 
-            : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
+          ${
+            dragActive
+              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+              : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
           }
+          ${loading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
         <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
@@ -187,7 +462,7 @@ export default function FileImport({ onImport }) {
         </div>
         <div className="text-center">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Drop a file here, or click to browse
+            {loading ? 'Processing...' : 'Drop a file here, or click to browse'}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
             Supports .json and .csv files
@@ -199,8 +474,80 @@ export default function FileImport({ onImport }) {
           accept=".json,.csv"
           onChange={handleChange}
           className="hidden"
+          disabled={loading}
         />
       </div>
+
+      {/* Text Input Buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => openTextInput('json')}
+          disabled={loading}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+        >
+          <Edit3 size={16} />
+          Paste JSON
+        </button>
+        <button
+          onClick={() => openTextInput('csv')}
+          disabled={loading}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+        >
+          <Edit3 size={16} />
+          Paste CSV
+        </button>
+      </div>
+
+      {/* Text Input Modal */}
+      {showTextInput && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-xl shadow-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h4 className="font-semibold text-slate-900 dark:text-white">
+                Paste {textInputMode?.toUpperCase()} Content
+              </h4>
+              <button
+                onClick={closeTextInput}
+                disabled={loading}
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-50"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4">
+              <textarea
+                value={textContent}
+                onChange={(e) => setTextContent(e.target.value)}
+                placeholder={
+                  textInputMode === 'json'
+                    ? '{\n  "title": "My Custom Reading",\n  "sections": [...]\n}'
+                    : 'Title,Matthew,Mark,Luke,John\nThe Birth,1:18-25,,2:1-20,'
+                }
+                className="w-full h-64 p-3 text-sm font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                spellCheck={false}
+                disabled={loading}
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+              <button
+                onClick={closeTextInput}
+                disabled={loading}
+                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={processTextInput}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {loading && <Loader2 size={16} className="animate-spin" />}
+                Import {textInputMode?.toUpperCase()}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Status Messages */}
       {error && (
@@ -240,16 +587,17 @@ export default function FileImport({ onImport }) {
               JSON Format
             </summary>
             <pre className="mt-2 p-2 bg-slate-100 dark:bg-slate-800 rounded overflow-x-auto">
-{`{
+              {`{
   "title": "My Custom Reading",
   "sections": [{
     "id": "section-1",
     "title": "Section Name",
-    "passages": [{
-      "gospel": "matthew",
-      "reference": "Matt 1:1-5",
-      "verses": [{"verse": 1, "text": "..."}]
-    }]
+    "passages": [
+      { "gospel": "matthew", "verses": "1:1-5" },
+      { "gospel": "mark", "verses": "" },
+      { "gospel": "luke", "verses": "" },
+      { "gospel": "john", "verses": "" }
+    ]
   }]
 }`}
             </pre>
@@ -259,9 +607,11 @@ export default function FileImport({ onImport }) {
               CSV Format
             </summary>
             <pre className="mt-2 p-2 bg-slate-100 dark:bg-slate-800 rounded overflow-x-auto">
-{`section_id,section_title,gospel,reference,verses_json
-section-1,The Birth,matthew,Matt 1:1,"[{\"verse\":1,\"text\":\"...\"}]"
-section-1,The Birth,luke,Luke 2:1,"[{\"verse\":1,\"text\":\"...\"}]"`}
+              {`Title,Matthew,Mark,Luke,John
+The Preaching of John,"3:7-10
+3:11-12",1:7-8,"3:7-9
+3:15-18",
+Temptations,4:1-11,,4:1-13,`}
             </pre>
           </details>
         </div>

@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ArrowLeft, BookOpen, X } from 'lucide-react'
-import { parseReference, LABELS, BOOKS, BibleVersionEnum } from '@verses/versesService'
+import { Search, ArrowLeft, BookOpen, X, Loader2 } from 'lucide-react'
+import {
+  parseReference,
+  BOOKS,
+  BibleVersionEnum,
+  fetchVerses,
+  searchVersesByText,
+} from '../verses'
 
 // Import sample data for demo purposes
-import parallelData from '../data/parallelVerses.json'
 
 export default function SearchPage() {
   const navigate = useNavigate()
@@ -12,7 +17,7 @@ export default function SearchPage() {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [selectedVersion, setSelectedVersion] = useState('ACF')
+  const [selectedPublisher, setSelectedVersion] = useState('ACF')
 
   // Get all available versions
   const versions = Object.keys(BibleVersionEnum)
@@ -28,17 +33,51 @@ export default function SearchPage() {
     setError(null)
 
     try {
-      // Use @verses library to parse the reference
+      // First try to parse as a reference
       const parsed = parseReference(searchQuery)
-      
-      if (!parsed) {
-        // If not a valid reference, try text search in sample data
-        const textResults = searchInSampleData(searchQuery)
-        setResults(textResults)
+
+      if (parsed) {
+        // Valid reference - fetch verses from API
+        const data = await fetchVerses(searchQuery, selectedPublisher)
+
+        if (data.verses && data.verses.length > 0) {
+          // Group verses by reference
+          setResults([
+            {
+              id: `ref-${parsed.bookName}-${parsed.chapter}-${parsed.startVerse}-${parsed.endVerse}`,
+              reference: data.reference,
+              bookName: parsed.bookName,
+              chapter: parsed.chapter,
+              startVerse: parsed.startVerse,
+              endVerse: parsed.endVerse,
+              version: data.version,
+              verses: data.verses,
+              type: 'reference',
+              text: data.verses.map((v) => v.text).join(' '),
+            },
+          ])
+        } else {
+          setError('No verses found for this reference')
+          setResults([])
+        }
       } else {
-        // Valid reference - format results
-        const verseResults = formatParsedResults(parsed, searchQuery)
-        setResults(verseResults)
+        // Not a valid reference, try text search
+        const versesByPublisher = await searchVersesByText(searchQuery, {
+          version: selectedPublisher,
+        })
+
+        console.log(versesByPublisher)
+        if (versesByPublisher && Object.keys(versesByPublisher).length > 0) {
+          // Group results by book/chapter
+          const groupedResults = groupSearchResults(
+            versesByPublisher,
+            selectedPublisher
+          )
+          setResults(groupedResults)
+        } else {
+          setError('No verses found for this reference')
+          setResults([])
+        }
       }
     } catch (err) {
       setError('Error searching: ' + err.message)
@@ -48,47 +87,45 @@ export default function SearchPage() {
     }
   }
 
-  // Search within sample data verses
-  const searchInSampleData = (query) => {
-    const lowerQuery = query.toLowerCase()
-    const matches = []
-    
-    parallelData.sections.forEach((section, sectionIdx) => {
-      section.passages.forEach(passage => {
-        passage.verses.forEach(verse => {
-          if (verse.text.toLowerCase().includes(lowerQuery)) {
-            matches.push({
-              id: `${sectionIdx}-${passage.gospel}-${verse.number}`,
-              reference: `${passage.reference}:${verse.number}`,
-              text: verse.text,
-              gospel: passage.gospel,
-              section: section.title,
-              type: 'text_match'
-            })
-          }
-        })
-      })
-    })
-    
-    return matches.slice(0, 20) // Limit to 20 results
-  }
+  // Group search results by book and chapter
+  const groupSearchResults = (verses, publisher) => {
+    const groups = {}
 
-  // Format parsed reference results
-  const formatParsedResults = (parsed, originalQuery) => {
-    // Create a formatted result based on the parsed reference
-    return [{
-      id: `ref-${Date.now()}`,
-      reference: `${BOOKS[parsed.book] || 'Unknown'} ${parsed.chapter}:${parsed.startVerse}${parsed.endVerse !== parsed.startVerse ? `-${parsed.endVerse}` : ''}`,
-      bookName: parsed.bookName,
-      chapter: parsed.chapter,
-      startVerse: parsed.startVerse,
-      endVerse: parsed.endVerse,
-      version: selectedVersion,
-      parsed: parsed,
-      type: 'reference',
-      text: `Parsed reference: Book #${parsed.book}, Chapter ${parsed.chapter}, Verses ${parsed.startVerse}-${parsed.endVerse}`,
-      originalQuery
-    }]
+    // Get the list of verses for the selected version
+    // Handle both formats: direct array or object keyed by version
+    const verseList = Array.isArray(verses) ? verses : verses[publisher] || []
+    console.log(verseList)
+
+    for (const verse of verseList) {
+      const bookName = verse.bookName || BOOKS[verse.book] || 'Desconhecido'
+      const key = `${bookName}-${verse.chapter}`
+
+      if (!groups[key]) {
+        groups[key] = {
+          id: `search-${key}`,
+          reference: `${bookName} ${verse.chapter}`,
+          bookName: bookName,
+          chapter: verse.chapter,
+          version: publisher,
+          type: 'text_match',
+          gospel: bookName.toLowerCase(),
+          verses: [],
+        }
+      }
+
+      // Ensure the verse object has necessary fields for display
+      groups[key].verses.push({
+        ...verse,
+        text: verse.text || verse.scripture,
+      })
+    }
+
+    // Sort verses within each group
+    for (const key in groups) {
+      groups[key].verses.sort((a, b) => a.verse - b.verse)
+    }
+
+    return Object.values(groups)
   }
 
   // Debounced search
@@ -99,15 +136,39 @@ export default function SearchPage() {
       } else {
         setResults([])
       }
-    }, 300)
+    }, 500) // Slightly longer delay for API calls
 
     return () => clearTimeout(timer)
-  }, [query, selectedVersion])
+  }, [query, selectedPublisher])
 
   const clearSearch = () => {
     setQuery('')
     setResults([])
     setError(null)
+  }
+
+  // Format verses for display
+  const formatVersesDisplay = (verses, query) => {
+    if (!verses || verses.length === 0) return []
+
+    return verses.map((v) => ({
+      number: v.verse,
+      text: v.text,
+    }))
+  }
+
+  // Highlight search term in text
+  const highlightText = (text, query) => {
+    if (!query || !text) return text
+    const regex = new RegExp(`(${escapeRegex(query)})`, 'gi')
+    return text.replace(
+      regex,
+      '<mark class="bg-yellow-200 dark:bg-yellow-700 px-0.5 rounded">$1</mark>'
+    )
+  }
+
+  const escapeRegex = (string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   }
 
   return (
@@ -123,7 +184,7 @@ export default function SearchPage() {
             >
               <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
             </button>
-            
+
             <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <BookOpen className="w-6 h-6 text-indigo-500" />
               Bible Search
@@ -139,12 +200,14 @@ export default function SearchPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Version Selector */}
             <select
-              value={selectedVersion}
+              value={selectedPublisher}
               onChange={(e) => setSelectedVersion(e.target.value)}
               className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none sm:w-28"
             >
-              {versions.map(v => (
-                <option key={v} value={v}>{v}</option>
+              {versions.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
               ))}
             </select>
 
@@ -173,7 +236,7 @@ export default function SearchPage() {
           {/* Search Help */}
           <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
             Tip: Enter a reference like "Matthew 1:18-25" or search by keyword.
-            Using @verses library for reference parsing.
+            Results are fetched from the {selectedPublisher} Bible version.
           </p>
         </div>
 
@@ -182,7 +245,7 @@ export default function SearchPage() {
           {loading && (
             <div className="text-center py-12">
               <div className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin" />
                 Searching...
               </div>
             </div>
@@ -203,11 +266,11 @@ export default function SearchPage() {
           )}
 
           {!loading && !error && results.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p className="text-sm text-slate-500 dark:text-slate-400 px-1">
                 Found {results.length} result{results.length !== 1 ? 's' : ''}
               </p>
-              
+
               {results.map((result) => (
                 <div
                   key={result.id}
@@ -215,28 +278,60 @@ export default function SearchPage() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-3">
                         <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
                           {result.reference}
                         </span>
-                        {result.type === 'reference' && (
-                          <span className="text-xs px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full">
-                            {result.version}
-                          </span>
-                        )}
+                        <span className="text-xs px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full">
+                          {result.version || selectedPublisher}
+                        </span>
                         {result.gospel && (
                           <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full capitalize">
                             {result.gospel}
                           </span>
                         )}
+                        {result.type === 'text_match' && (
+                          <span className="text-xs px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full">
+                            Text Match
+                          </span>
+                        )}
                       </div>
-                      
-                      <p className="text-slate-800 dark:text-slate-200 leading-relaxed">
-                        {result.text}
-                      </p>
-                      
+
+                      {/* Display verses */}
+                      {result.verses && result.verses.length > 0 ? (
+                        <div className="space-y-2">
+                          {result.verses.map((verse) => (
+                            <p
+                              key={verse.verse}
+                              className="text-slate-800 dark:text-slate-200 leading-relaxed"
+                            >
+                              <sup className="font-bold mr-1 text-xs text-indigo-500">
+                                {verse.verse}
+                              </sup>
+                              <span
+                                className="font-serif"
+                                dangerouslySetInnerHTML={{
+                                  __html: highlightText(verse.text, query),
+                                }}
+                              />
+                            </p>
+                          ))}
+                        </div>
+                      ) : result.text ? (
+                        <p
+                          className="text-slate-800 dark:text-slate-200 leading-relaxed font-serif"
+                          dangerouslySetInnerHTML={{
+                            __html: highlightText(result.text, query),
+                          }}
+                        />
+                      ) : (
+                        <p className="text-slate-500 italic">
+                          No verse text available
+                        </p>
+                      )}
+
                       {result.section && (
-                        <p className="mt-2 text-xs text-slate-500 dark:text-slate-500">
+                        <p className="mt-3 text-xs text-slate-500 dark:text-slate-500">
                           From: {result.section}
                         </p>
                       )}
@@ -256,12 +351,18 @@ export default function SearchPage() {
                 Start Searching
               </h3>
               <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                Enter a Bible reference like "Matthew 1:18-25" or search for keywords across the four Gospels.
+                Enter a Bible reference like "Matthew 1:18-25" or search for
+                keywords across the four Gospels.
               </p>
-              
+
               {/* Quick Examples */}
               <div className="mt-6 flex flex-wrap justify-center gap-2">
-                {['Matthew 1:18', 'Mark 2:1-12', 'Luke 1:26-38', 'John 3:16'].map(example => (
+                {[
+                  'Matthew 1:18',
+                  'Mark 2:1-12',
+                  'Luke 1:26-38',
+                  'John 3:16',
+                ].map((example) => (
                   <button
                     key={example}
                     onClick={() => setQuery(example)}

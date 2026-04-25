@@ -128,13 +128,14 @@ export default function MobileGospelTabs({
                 className={`
                   flex-1 flex flex-col items-center justify-center py-2 px-1
                   transition-all duration-200 min-h-[52px]
-                  ${isActive 
-                    ? `${gConfig.lightBg} ${gConfig.darkBg}` 
-                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                  ${
+                    isActive
+                      ? `${gConfig.lightBg} ${gConfig.darkBg}`
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                   }
                 `}
               >
-                <span 
+                <span
                   className={`
                     text-xs font-bold leading-tight
                     ${isActive ? gConfig.textColor : 'text-slate-500 dark:text-slate-400'}
@@ -143,15 +144,19 @@ export default function MobileGospelTabs({
                 >
                   {gConfig.title}
                 </span>
-                <span className={`
+                <span
+                  className={`
                   text-[10px] leading-tight mt-0.5
                   ${isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}
-                `}>
+                `}
+                >
                   {gConfig.subtitle}
                 </span>
                 {/* Active indicator dot */}
                 {isActive && (
-                  <div className={`w-1.5 h-1.5 rounded-full ${gConfig.color} mt-1`} />
+                  <div
+                    className={`w-1.5 h-1.5 rounded-full ${gConfig.color} mt-1`}
+                  />
                 )}
               </button>
             )
@@ -160,32 +165,38 @@ export default function MobileGospelTabs({
       </div>
 
       {/* Swipeable Content Area */}
-      <div 
+      <div
         ref={contentRef}
         className="flex-1 overflow-y-auto overflow-x-hidden"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className={`
+        <div
+          className={`
           bg-white dark:bg-slate-900 min-h-full
           border-t-4 ${config.borderColor}
-        `}>
+        `}
+        >
           {/* Header Card */}
-          <div className={`
+          <div
+            className={`
             px-4 py-3 border-b border-slate-100 dark:border-slate-800
             ${config.lightBg} ${config.darkBg}
-          `}>
+          `}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <h2 className={`font-bold text-lg ${config.textColor} ${config.darkTextColor}`}>
+                <h2
+                  className={`font-bold text-lg ${config.textColor} ${config.darkTextColor}`}
+                >
                   {config.title}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {config.subtitle}
                 </p>
               </div>
-              
+
               {/* Navigation Arrows */}
               <div className="flex items-center gap-1">
                 <button
@@ -216,12 +227,14 @@ export default function MobileGospelTabs({
           {/* Reference Badge */}
           {passage.reference && (
             <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-              <span className={`
+              <span
+                className={`
                 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
                 text-xs font-semibold
                 ${config.lightBg} ${config.darkBg}
                 ${config.textColor} ${config.darkTextColor}
-              `}>
+              `}
+              >
                 {passage.reference}
               </span>
             </div>
@@ -236,7 +249,7 @@ export default function MobileGospelTabs({
                     key={verse.verse}
                     className="leading-[1.8] text-[15px] text-slate-800 dark:text-slate-200"
                   >
-                    <span 
+                    <span
                       className={`
                         inline-flex items-center justify-center
                         w-6 h-6 rounded-full text-[10px] font-bold mr-2
@@ -252,11 +265,15 @@ export default function MobileGospelTabs({
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className={`
+                <div
+                  className={`
                   w-16 h-16 rounded-full mb-4 flex items-center justify-center
                   ${config.lightBg} ${config.darkBg}
-                `}>
-                  <span className={`text-2xl ${config.textColor} ${config.darkTextColor}`}>
+                `}
+                >
+                  <span
+                    className={`text-2xl ${config.textColor} ${config.darkTextColor}`}
+                  >
                     —
                   </span>
                 </div>

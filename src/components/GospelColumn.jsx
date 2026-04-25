@@ -41,7 +41,9 @@ export default function GospelColumn({ gospel, reference, verses }) {
   return (
     <div className={`gospel-column ${config.color} h-full`}>
       {/* Header */}
-      <div className={`gospel-header ${config.bg} flex items-center justify-between`}>
+      <div
+        className={`gospel-header ${config.bg} flex items-center justify-between`}
+      >
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-lg ${config.iconBg}`}>
             <BookOpen className={config.iconColor} size={20} />
@@ -57,12 +59,16 @@ export default function GospelColumn({ gospel, reference, verses }) {
         </div>
 
         <div className="flex items-center gap-1">
-          <button className="p-1.5 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 
-                           dark:hover:text-indigo-400 dark:hover:bg-indigo-900/30 transition-colors">
+          <button
+            className="p-1.5 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 
+                           dark:hover:text-indigo-400 dark:hover:bg-indigo-900/30 transition-colors"
+          >
             <Bookmark size={16} />
           </button>
-          <button className="p-1.5 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 
-                           dark:hover:text-indigo-400 dark:hover:bg-indigo-900/30 transition-colors">
+          <button
+            className="p-1.5 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 
+                           dark:hover:text-indigo-400 dark:hover:bg-indigo-900/30 transition-colors"
+          >
             <Share2 size={16} />
           </button>
         </div>
@@ -78,7 +84,9 @@ export default function GospelColumn({ gospel, reference, verses }) {
             </span>
           </div>
         ) : (
-          <span className="text-sm text-slate-400 italic">No parallel passage</span>
+          <span className="text-sm text-slate-400 italic">
+            No parallel passage
+          </span>
         )}
       </div>
 
@@ -94,9 +102,7 @@ export default function GospelColumn({ gospel, reference, verses }) {
                   ${index > 0 ? 'pt-3 border-t border-slate-100 dark:border-slate-800/50' : ''}
                 `}
               >
-                <sup 
-                  className={`font-bold mr-1 text-xs ${config.iconColor}`}
-                >
+                <sup className={`font-bold mr-1 text-xs ${config.iconColor}`}>
                   {verse.verse}
                 </sup>
                 <span className="font-serif">{verse.text}</span>

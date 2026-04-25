@@ -1,6 +1,14 @@
 import { useTheme } from '../contexts/ThemeContext'
 import { useNavigate } from 'react-router-dom'
-import { Sun, Moon, BookOpen, Settings, Search, Bookmark, ExternalLink } from 'lucide-react'
+import {
+  Sun,
+  Moon,
+  BookOpen,
+  Settings,
+  Search,
+  Bookmark,
+  ExternalLink,
+} from 'lucide-react'
 
 export default function Header({ activeSection, onSectionChange, sections }) {
   const { isDark, toggleTheme } = useTheme()
@@ -81,9 +89,10 @@ export default function Header({ activeSection, onSectionChange, sections }) {
                     onClick={() => handleSectionClick(item.id)}
                     className={`
                       flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
-                      ${isActive
-                        ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300'
-                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+                      ${
+                        isActive
+                          ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300'
+                          : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
                       }
                     `}
                   >
@@ -109,10 +118,12 @@ export default function Header({ activeSection, onSectionChange, sections }) {
       </header>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 
                      bg-white dark:bg-slate-900 
                      border-t border-slate-200 dark:border-slate-800
-                     pb-safe">
+                     pb-safe"
+      >
         <div className="flex items-center justify-around h-14">
           {menuItems.map((item) => {
             const Icon = item.icon
@@ -124,14 +135,17 @@ export default function Header({ activeSection, onSectionChange, sections }) {
                 className={`
                   flex flex-col items-center justify-center flex-1 h-full
                   transition-colors duration-200
-                  ${isActive 
-                    ? 'text-indigo-600 dark:text-indigo-400' 
-                    : 'text-slate-400 dark:text-slate-500 active:text-slate-600'
+                  ${
+                    isActive
+                      ? 'text-indigo-600 dark:text-indigo-400'
+                      : 'text-slate-400 dark:text-slate-500 active:text-slate-600'
                   }
                 `}
               >
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-medium mt-0.5">{item.label}</span>
+                <span className="text-[10px] font-medium mt-0.5">
+                  {item.label}
+                </span>
               </button>
             )
           })}

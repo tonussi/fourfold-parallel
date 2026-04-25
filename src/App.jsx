@@ -5,7 +5,7 @@ import SectionNav from './components/SectionNav'
 import GospelColumn from './components/GospelColumn'
 import MobileGospelTabs from './components/MobileGospelTabs'
 import FileImport from './components/FileImport'
-import { parseReference, LABELS, BOOKS, BibleVersionEnum } from '@verses/versesService'
+import { parseReference, LABELS, BOOKS, BibleVersionEnum } from './verses'
 import { Search } from 'lucide-react'
 import parallelData from './data/parallelVerses.json'
 import './App.css'
@@ -18,6 +18,60 @@ const GOSPEL_CONFIG = {
   john: { title: 'João', color: 'bg-purple-500' },
 }
 
+const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
+
+// Transform simplified verse format to full format with reference
+const transformData = (data) => {
+  if (!data?.sections) return data
+
+  return {
+    ...data,
+    sections: data.sections.map((section) => ({
+      ...section,
+      passages: section.passages.map((passage) => {
+        // If already has reference and verses array, return as-is
+        if (
+          passage.reference &&
+          Array.isArray(passage.verses) &&
+          passage.verses.length > 0
+        ) {
+          return passage
+        }
+        // Transform simplified format
+        const versesStr = passage.verses || ''
+        if (!versesStr) {
+          return { ...passage, reference: '', verses: [] }
+        }
+
+        // Parse "chapter:verseFrom-verseTo" or "chapter:verse" format
+        const match = versesStr.match(/^(\d+):(\d+)(?:-(\d+))?$/)
+        if (!match) {
+          return { ...passage, reference: '', verses: [] }
+        }
+
+        const chapter = match[1]
+        const startVerse = parseInt(match[2], 10)
+        const endVerse = match[3] ? parseInt(match[3], 10) : startVerse
+
+        const bookName = capitalize(passage.gospel)
+        const verseRef =
+          startVerse === endVerse
+            ? `${chapter}:${startVerse}`
+            : `${chapter}:${startVerse}-${endVerse}`
+        const reference = `${bookName} ${verseRef}`
+
+        // Create empty verse array (text would be fetched from API)
+        const verses = []
+        for (let v = startVerse; v <= endVerse; v++) {
+          verses.push({ verse: v, text: '' })
+        }
+
+        return { ...passage, reference, verses }
+      }),
+    })),
+  }
+}
+
 // Helper function using @verses library to process verse references
 function processVerseReference(reference) {
   if (!reference) return null
@@ -28,7 +82,8 @@ function processVerseReference(reference) {
 
 // Get display title from verses library
 function getBookDisplayTitle(gospel) {
-  const bookNum = LABELS[gospel] || LABELS[gospel.charAt(0).toUpperCase() + gospel.slice(1)]
+  const bookNum =
+    LABELS[gospel] || LABELS[gospel.charAt(0).toUpperCase() + gospel.slice(1)]
   return bookNum ? BOOKS[bookNum] : gospel
 }
 
@@ -42,26 +97,31 @@ function ParallelReader() {
 
   // Detect mobile viewport
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Use imported data if available, otherwise use default
-  const displayData = importedData || parallelData
+  // Use imported data if available, otherwise use default (transformed)
+  const displayData = importedData || transformData(parallelData)
   const displaySections = displayData.sections
   const currentSection = displaySections[currentSectionIndex]
-  
+
   // Log verses library usage for demonstration
   useEffect(() => {
-    console.log('Using @verses library - Available versions:', Object.keys(BibleVersionEnum))
+    console.log(
+      'Using @verses library - Available versions:',
+      Object.keys(BibleVersionEnum)
+    )
     if (currentSection?.passages) {
       console.log('Current section references:')
-      currentSection.passages.forEach(p => {
+      currentSection.passages.forEach((p) => {
         if (p.reference) {
           const parsed = processVerseReference(p.reference)
-          console.log(`  ${p.reference} -> Book #${parsed?.book}, Ch ${parsed?.chapter}, Verses ${parsed?.startVerse}-${parsed?.endVerse}`)
+          console.log(
+            `  ${p.reference} -> Book #${parsed?.book}, Ch ${parsed?.chapter}, Verses ${parsed?.startVerse}-${parsed?.endVerse}`
+          )
         }
       })
     }
@@ -69,13 +129,13 @@ function ParallelReader() {
 
   const handlePrev = () => {
     if (currentSectionIndex > 0) {
-      setCurrentSectionIndex(prev => prev - 1)
+      setCurrentSectionIndex((prev) => prev - 1)
     }
   }
 
   const handleNext = () => {
     if (currentSectionIndex < displaySections.length - 1) {
-      setCurrentSectionIndex(prev => prev + 1)
+      setCurrentSectionIndex((prev) => prev + 1)
     }
   }
 
@@ -90,37 +150,44 @@ function ParallelReader() {
   }
 
   // Swipe navigation for mobile
-  const handleSwipe = useCallback((direction) => {
-    const currentIdx = GOSPELS.indexOf(activeGospelTab)
-    if (direction === 'left' && currentIdx < GOSPELS.length - 1) {
-      setActiveGospelTab(GOSPELS[currentIdx + 1])
-    } else if (direction === 'right' && currentIdx > 0) {
-      setActiveGospelTab(GOSPELS[currentIdx - 1])
-    }
-  }, [activeGospelTab])
+  const handleSwipe = useCallback(
+    (direction) => {
+      const currentIdx = GOSPELS.indexOf(activeGospelTab)
+      if (direction === 'left' && currentIdx < GOSPELS.length - 1) {
+        setActiveGospelTab(GOSPELS[currentIdx + 1])
+      } else if (direction === 'right' && currentIdx > 0) {
+        setActiveGospelTab(GOSPELS[currentIdx - 1])
+      }
+    },
+    [activeGospelTab]
+  )
 
   const getPassageForGospel = (gospel) => {
     // Use verses library to get book display name
     const bookTitle = getBookDisplayTitle(gospel)
-    
-    const passage = currentSection.passages.find(p => p.gospel === gospel) || {
+
+    const passage = currentSection.passages.find(
+      (p) => p.gospel === gospel
+    ) || {
       gospel,
       reference: '',
-      verses: []
+      verses: [],
     }
-    
+
     // Process reference using verses library
     if (passage.reference) {
       const parsed = processVerseReference(passage.reference)
-      console.log(`@verses lib: ${passage.reference} for ${gospel} (Book #${parsed?.book})`)
+      console.log(
+        `@verses lib: ${passage.reference} for ${gospel} (Book #${parsed?.book})`
+      )
     }
-    
+
     return passage
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-950">
-      <Header 
+      <Header
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         sections={displaySections}
@@ -210,7 +277,7 @@ function ParallelReader() {
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
                 Configurações
               </h2>
-              
+
               {/* Import Section */}
               <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 mb-6">
                 <FileImport onImport={handleImport} />
@@ -223,7 +290,10 @@ function ParallelReader() {
                     Fonte de Dados Atual
                   </h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                    Exibindo: <span className="font-medium text-indigo-600 dark:text-indigo-400">{displayData.title}</span>
+                    Exibindo:{' '}
+                    <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                      {displayData.title}
+                    </span>
                   </p>
                   <button
                     onClick={handleResetToDefault}
