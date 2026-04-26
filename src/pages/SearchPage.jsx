@@ -38,22 +38,34 @@ export default function SearchPage() {
 
       if (parsed) {
         // Valid reference - fetch verses from API
-        const data = await fetchVerses(searchQuery, selectedPublisher)
+        const data = await fetchVerses([
+          {
+            book: parsed.book,
+            chapter: parsed.chapter,
+            from: parsed.startVerse,
+            to: parsed.endVerse,
+            publisher: selectedPublisher,
+          },
+        ])
 
-        if (data.verses && data.verses.length > 0) {
+        const resultVerses = data[selectedPublisher] || data.verses || []
+        
+        if (resultVerses && resultVerses.length > 0) {
           // Group verses by reference
           setResults([
             {
               id: `ref-${parsed.bookName}-${parsed.chapter}-${parsed.startVerse}-${parsed.endVerse}`,
-              reference: data.reference,
+              reference: searchQuery,
               bookName: parsed.bookName,
               chapter: parsed.chapter,
               startVerse: parsed.startVerse,
               endVerse: parsed.endVerse,
-              version: data.version,
-              verses: data.verses,
+              version: selectedPublisher,
+              verses: resultVerses.map(v => ({
+                verse: v.verse,
+                text: v.scripture || v.text
+              })),
               type: 'reference',
-              text: data.verses.map((v) => v.text).join(' '),
             },
           ])
         } else {

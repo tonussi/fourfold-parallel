@@ -101,6 +101,7 @@ function ParallelReader() {
   const [isMobile, setIsMobile] = useState(false)
   const [sectionVerses, setSectionVerses] = useState({})
   const [isLoadingVerses, setIsLoadingVerses] = useState(false)
+  const [selectedVersion, setSelectedVersion] = useState('ACF')
   const { sections } = parallelData
 
   // Detect mobile viewport
@@ -123,30 +124,46 @@ function ParallelReader() {
       const newVerses = {}
 
       try {
-        // We iterate through all gospels in parallel
-        await Promise.all(
-          section.passages.map(async (passage) => {
-            if (!passage.reference) return
+        const segments = []
+        const passageMap = {} // Map book number to gospel name for easy assignment
 
-            try {
-              // The API returns an object like { "ACF": [...], "BYZ": [...] }
-              const result = await fetchVerses(passage.reference, 'ACF')
-              // Use ACF by default as shown in the user's example format
-              const versionData = result.data?.ACF || result.ACF
-              if (versionData && Array.isArray(versionData)) {
-                newVerses[passage.gospel] = versionData.map((v) => ({
+        section.passages.forEach((passage) => {
+          if (!passage.reference) return
+          const parsed = parseReference(passage.reference)
+          if (!parsed) return
+
+          segments.push({
+            book: parsed.book,
+            chapter: parsed.chapter,
+            from: parsed.startVerse,
+            to: parsed.endVerse,
+            publisher: selectedVersion,
+          })
+
+          // Use the book number to map back to the passage gospel
+          // Matthew: 40, Mark: 41, Luke: 42, John: 43
+          passageMap[parsed.book] = passage.gospel
+        })
+
+        if (segments.length > 0) {
+          const result = await fetchVerses(segments)
+          // Handle both result.ACF or result.data?.ACF format
+          const acfVerses = result.ACF || result.data?.ACF
+
+          if (acfVerses && Array.isArray(acfVerses)) {
+            // Group verses by their book number
+            acfVerses.forEach((v) => {
+              const gospel = passageMap[v.book]
+              if (gospel) {
+                if (!newVerses[gospel]) newVerses[gospel] = []
+                newVerses[gospel].push({
                   verse: v.verse,
                   text: v.scripture,
-                }))
+                })
               }
-            } catch (err) {
-              console.error(
-                `Failed to fetch verses for ${passage.gospel}:`,
-                err
-              )
-            }
-          })
-        )
+            })
+          }
+        }
         setSectionVerses(newVerses)
       } catch (error) {
         console.error('Error loading section verses:', error)
