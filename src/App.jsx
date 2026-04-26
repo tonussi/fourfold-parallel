@@ -129,20 +129,22 @@ function ParallelReader() {
 
         section.passages.forEach((passage) => {
           if (!passage.reference) return
-          const parsed = parseReference(passage.reference)
-          if (!parsed) return
+          const parsedList = parseReference(passage.reference)
+          if (!parsedList) return
 
-          segments.push({
-            book: parsed.book,
-            chapter: parsed.chapter,
-            from: parsed.startVerse,
-            to: parsed.endVerse,
-            publisher: selectedVersion,
+          parsedList.forEach((parsed) => {
+            segments.push({
+              book: parsed.book,
+              chapter: parsed.chapter,
+              from: parsed.from,
+              to: parsed.to,
+              publisher: selectedVersion,
+            })
+
+            // Use the book number to map back to the passage gospel
+            // Matthew: 40, Mark: 41, Luke: 42, John: 43
+            passageMap[parsed.book] = passage.gospel
           })
-
-          // Use the book number to map back to the passage gospel
-          // Matthew: 40, Mark: 41, Luke: 42, John: 43
-          passageMap[parsed.book] = passage.gospel
         })
 
         if (segments.length > 0) {
@@ -191,10 +193,12 @@ function ParallelReader() {
       console.log('Current section references:')
       currentSection.passages.forEach((p) => {
         if (p.reference) {
-          const parsed = processVerseReference(p.reference)
-          console.log(
-            `  ${p.reference} -> Book #${parsed?.book}, Ch ${parsed?.chapter}, Verses ${parsed?.startVerse}-${parsed?.endVerse}`
-          )
+          const parsedList = processVerseReference(p.reference)
+          parsedList?.forEach((parsed) => {
+            console.log(
+              `  ${p.reference} -> Book #${parsed?.book}, Ch ${parsed?.chapter}, Verses ${parsed?.from}-${parsed?.to}`
+            )
+          })
         }
       })
     }

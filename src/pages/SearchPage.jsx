@@ -6,7 +6,6 @@ import {
   BOOKS_PROTESTANT,
   BibleVersionEnum,
   fetchVerses,
-  searchVersesByText,
 } from '../verses'
 
 // Import sample data for demo purposes
@@ -34,58 +33,32 @@ export default function SearchPage() {
 
     try {
       // First try to parse as a reference
-      const parsed = parseReference(searchQuery)
-
-      if (parsed) {
+      const parsedList = parseReference(searchQuery)
+      if (parsedList && parsedList.length > 0) {
+        const firstParsed = parsedList[0]
         // Valid reference - fetch verses from API
-        const data = await fetchVerses([
-          {
-            book: parsed.book,
-            chapter: parsed.chapter,
-            from: parsed.startVerse,
-            to: parsed.endVerse,
-            publisher: selectedPublisher,
-          },
-        ])
+        const data = await fetchVerses(parsedList)
 
         const resultVerses = data[selectedPublisher] || data.verses || []
-        
+
         if (resultVerses && resultVerses.length > 0) {
           // Group verses by reference
           setResults([
             {
-              id: `ref-${parsed.bookName}-${parsed.chapter}-${parsed.startVerse}-${parsed.endVerse}`,
+              id: `ref-${firstParsed.bookName}-${firstParsed.chapter}-${firstParsed.from}-${firstParsed.to}`,
               reference: searchQuery,
-              bookName: parsed.bookName,
-              chapter: parsed.chapter,
-              startVerse: parsed.startVerse,
-              endVerse: parsed.endVerse,
+              bookName: firstParsed.bookName,
+              chapter: firstParsed.chapter,
+              startVerse: firstParsed.from,
+              endVerse: firstParsed.to,
               version: selectedPublisher,
-              verses: resultVerses.map(v => ({
+              verses: resultVerses.map((v) => ({
                 verse: v.verse,
-                text: v.scripture || v.text
+                text: v.scripture || v.text,
               })),
               type: 'reference',
             },
           ])
-        } else {
-          setError('No verses found for this reference')
-          setResults([])
-        }
-      } else {
-        // Not a valid reference, try text search
-        const versesByPublisher = await searchVersesByText(searchQuery, {
-          version: selectedPublisher,
-        })
-
-        console.log(versesByPublisher)
-        if (versesByPublisher && Object.keys(versesByPublisher).length > 0) {
-          // Group results by book/chapter
-          const groupedResults = groupSearchResults(
-            versesByPublisher,
-            selectedPublisher
-          )
-          setResults(groupedResults)
         } else {
           setError('No verses found for this reference')
           setResults([])
