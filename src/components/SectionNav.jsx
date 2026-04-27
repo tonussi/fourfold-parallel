@@ -11,7 +11,7 @@ export default function SectionNav({
   onVersionChange,
   versions,
 }) {
-  const currentSection = sections[currentIndex]
+  const currentSection = sections[currentIndex] || { title: 'Carregando...', id: 'loading' }
 
   return (
     <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">

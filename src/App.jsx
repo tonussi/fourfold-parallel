@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { SidebarProvider, useSidebar } from './contexts/SidebarContext'
 import Header from './components/Header'
 import SectionNav from './components/SectionNav'
 import GospelColumn from './components/GospelColumn'
 import MobileGospelTabs from './components/MobileGospelTabs'
 import FileImport from './components/FileImport'
+import Sidebar, { SidebarCard } from './components/Sidebar'
 import {
   parseReference,
   LABELS,
@@ -13,7 +15,7 @@ import {
   BibleVersionEnum,
   fetchVerses,
 } from './verses'
-import { Search } from 'lucide-react'
+import { Search, Download, BookOpen, FileText } from 'lucide-react'
 import parallelData from './data/parallelVerses.json'
 import {
   selectCurrentVersion,
@@ -32,6 +34,17 @@ const GOSPEL_CONFIG = {
   luke: { title: 'Lucas', color: 'bg-emerald-500' },
   john: { title: 'João', color: 'bg-purple-500' },
 }
+
+const EXAMPLES = [
+  {
+    name: 'The Complete Gospels (Q)',
+    file: 'TheCompleteGospels-Q.csv',
+    type: 'CSV',
+  },
+  { name: 'Bart Ehrman - Q', file: 'BartEhrman-Q.csv', type: 'CSV' },
+  { name: 'A Theology of Q', file: 'ATheologyOfQ-Q.csv', type: 'CSV' },
+  { name: 'Research Notes', file: 'Q-Researchers.md', type: 'MD' },
+]
 
 const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
 
@@ -110,6 +123,7 @@ function ParallelReader() {
   const [sectionVerses, setSectionVerses] = useState({})
   const [isLoadingVerses, setIsLoadingVerses] = useState(false)
   const [highlightedWord, setHighlightedWord] = useState(null)
+  const { setSidebarContent, setTitle } = useSidebar()
 
   // Redux state
   const selectedVersion = useSelector(selectCurrentVersion)
@@ -129,7 +143,10 @@ function ParallelReader() {
   // Use imported data if available, otherwise use default (transformed)
   const displayData = importedData || transformData(parallelData)
   const displaySections = displayData.sections
-  const currentSection = displaySections[currentSectionIndex]
+  const currentSection = displaySections[currentSectionIndex] || {
+    title: 'Carregando...',
+    id: 'loading',
+  }
 
   const loadVerses = useCallback(
     async (section) => {
@@ -165,10 +182,10 @@ function ParallelReader() {
           const result = await fetchVerses(segments)
           // The API returns results keyed by the publisher label
           // Try specific version first, then fallback to first available array
-          const versionVerses = 
-            result[selectedVersion] || 
-            result.data?.[selectedVersion] || 
-            Object.values(result).find(val => Array.isArray(val))
+          const versionVerses =
+            result[selectedVersion] ||
+            result.data?.[selectedVersion] ||
+            Object.values(result).find((val) => Array.isArray(val))
 
           if (versionVerses && Array.isArray(versionVerses)) {
             // Group verses by their book number
@@ -201,26 +218,39 @@ function ParallelReader() {
     }
   }, [currentSectionIndex, loadVerses])
 
-  // Log verses library usage for demonstration
   useEffect(() => {
-    console.log(
-      'Using @verses library - Available versions:',
-      Object.keys(BibleVersionEnum)
-    )
-    if (currentSection?.passages) {
-      console.log('Current section references:')
-      currentSection.passages.forEach((p) => {
-        if (p.reference) {
-          const parsedList = processVerseReference(p.reference)
-          parsedList?.forEach((parsed) => {
-            console.log(
-              `  ${p.reference} -> Book #${parsed?.book}, Ch ${parsed?.chapter}, Verses ${parsed?.from}-${parsed?.to}`
-            )
-          })
-        }
-      })
+    if (activeSection === 'read') {
+      setTitle('Leitura')
+      setSidebarContent(
+        <div className="space-y-4">
+          <SidebarCard
+            icon={<BookOpen size={18} />}
+            title="Sessão Atual"
+            description={currentSection?.title || 'Sem título'}
+          />
+          <SidebarCard
+            icon={<FileText size={18} />}
+            title="Fonte"
+            description={displayData.title}
+          />
+        </div>
+      )
+    } else if (activeSection === 'settings') {
+      setTitle('Configurações')
+      setSidebarContent(
+        <div className="space-y-4">
+          <SidebarCard
+            icon={<Download size={18} />}
+            title="Download de Exemplos"
+            description="Baixe modelos de CSV para criar suas próprias coleções."
+          />
+        </div>
+      )
+    } else {
+      setTitle('Menu')
+      setSidebarContent(null)
     }
-  }, [currentSection])
+  }, [activeSection, currentSection, displayData, setSidebarContent, setTitle])
 
   const handlePrev = () => {
     if (currentSectionIndex > 0) {
@@ -248,6 +278,16 @@ function ParallelReader() {
     dispatch(setCurrentSectionIndex(0))
   }
 
+  const handleDownloadExample = (filename) => {
+    const url = `/src/assets/examples/${filename}`
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   // Swipe navigation for mobile
   const handleSwipe = useCallback(
     (direction) => {
@@ -265,7 +305,7 @@ function ParallelReader() {
     // Use verses library to get book display name
     const bookTitle = getBookDisplayTitle(gospel)
 
-    const passage = currentSection.passages.find(
+    const passage = currentSection?.passages?.find(
       (p) => p.gospel === gospel
     ) || {
       gospel,
@@ -285,7 +325,7 @@ function ParallelReader() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-950">
+    <>
       <Header
         activeSection={activeSection}
         onSectionChange={setActiveSection}
@@ -379,31 +419,69 @@ function ParallelReader() {
 
         {activeSection === 'settings' && (
           <div className="h-[calc(100vh-220px)] md:h-[calc(100vh-200px)] overflow-y-auto p-4 lg:p-6 mb-16 md:mb-0">
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-2xl mx-auto space-y-6">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
                 Configurações
               </h2>
 
+              {/* Example Downloads */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600">
+                    <Download size={20} />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                    Modelos e Exemplos
+                  </h3>
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                  Baixe estes exemplos para ver como formatar seus próprios
+                  arquivos CSV para importação.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {EXAMPLES.map((example) => (
+                    <button
+                      key={example.file}
+                      onClick={() => handleDownloadExample(example.file)}
+                      className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 transition-all group"
+                    >
+                      <div className="text-left">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                          {example.name}
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          {example.type} File
+                        </p>
+                      </div>
+                      <Download
+                        size={16}
+                        className="text-slate-400 group-hover:text-indigo-500 transition-colors"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Import Section */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 mb-6">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
                 <FileImport onImport={handleImport} />
               </div>
 
               {/* Reset to Default */}
               {importedData && (
-                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-                  <h3 className="font-semibold text-slate-900 dark:text-white mb-2">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                  <h3 className="font-bold text-slate-900 dark:text-white mb-2">
                     Fonte de Dados Atual
                   </h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                     Exibindo:{' '}
-                    <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
                       {displayData.title}
                     </span>
                   </p>
                   <button
                     onClick={handleResetToDefault}
-                    className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                    className="px-6 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all active:scale-95"
                   >
                     Restaurar Padrão
                   </button>
@@ -415,22 +493,24 @@ function ParallelReader() {
       </main>
 
       {/* Footer Info - Hidden on mobile to save space */}
-      <footer className="hidden md:block py-2 px-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
-        <div className="max-w-[1920px] mx-auto flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <p>{displayData.title}</p>
-          <span className="text-indigo-500">@verses lib</span>
+      <footer className="hidden md:block py-3 px-8 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
+        <div className="max-w-[1920px] mx-auto flex items-center justify-between text-xs text-slate-400">
+          <p className="font-medium">{displayData.title}</p>
+          <div className="flex items-center gap-4">
+            <span className="text-indigo-500 font-semibold tracking-wider">
+              @TONUSSILABS
+            </span>
+            <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+            <span>{displaySections?.length} Seções</span>
+          </div>
         </div>
       </footer>
-    </div>
+    </>
   )
 }
 
 function App() {
-  return (
-    <ThemeProvider>
-      <ParallelReader />
-    </ThemeProvider>
-  )
+  return <ParallelReader />
 }
 
 export default App

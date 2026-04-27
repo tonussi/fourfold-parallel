@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
 import {
   Upload,
-  FileJson,
   FileSpreadsheet,
   AlertCircle,
   Check,
@@ -17,7 +16,6 @@ export default function FileImport({ onImport }) {
   const [success, setSuccess] = useState(null)
   const [loading, setLoading] = useState(false)
   const [showTextInput, setShowTextInput] = useState(false)
-  const [textInputMode, setTextInputMode] = useState(null) // 'json' or 'csv'
   const [textContent, setTextContent] = useState('')
   const fileInputRef = useRef(null)
 
@@ -26,8 +24,7 @@ export default function FileImport({ onImport }) {
     setSuccess(null)
   }
 
-  const openTextInput = (mode) => {
-    setTextInputMode(mode)
+  const openTextInput = () => {
     setTextContent('')
     setShowTextInput(true)
     resetStatus()
@@ -35,7 +32,6 @@ export default function FileImport({ onImport }) {
 
   const closeTextInput = () => {
     setShowTextInput(false)
-    setTextInputMode(null)
     setTextContent('')
   }
 
@@ -63,11 +59,9 @@ export default function FileImport({ onImport }) {
   }
 
   // Parse verses format supporting multiple ranges separated by semicolons or newlines
-  // e.g., "10:1;10:7-11;10:14" or "3:7-10\n3:11-12"
   const parseVersesFormat = (gospel, versesStr) => {
     if (!versesStr) return { reference: '', ranges: [] }
 
-    // Split by semicolons or newlines to handle multiple verse references
     const lines = versesStr
       .split(/[;\r?\n]+/)
       .map((l) => l.trim())
@@ -84,7 +78,6 @@ export default function FileImport({ onImport }) {
 
     if (ranges.length === 0) return { reference: '', ranges: [] }
 
-    // Build reference string from all ranges
     const rangeStrs = ranges.map((r) =>
       r.startVerse === r.endVerse
         ? `${r.chapter}:${r.startVerse}`
@@ -117,14 +110,12 @@ export default function FileImport({ onImport }) {
         if (data.verses && data.verses.length > 0) {
           allVerses.push(...data.verses)
         } else {
-          // Fallback: generate empty verses for this range
           for (let v = range.startVerse; v <= range.endVerse; v++) {
             allVerses.push({ verse: v, text: '[Verse text unavailable]' })
           }
         }
       } catch (err) {
         console.warn(`Failed to fetch verses for ${fullRef}:`, err)
-        // Fallback: generate empty verses for this range
         for (let v = range.startVerse; v <= range.endVerse; v++) {
           allVerses.push({ verse: v, text: '[Verse text unavailable]' })
         }
@@ -134,7 +125,6 @@ export default function FileImport({ onImport }) {
     return { reference, verses: allVerses }
   }
 
-  // Transform imported data to include full verse arrays with fetched content
   const transformImportData = async (data, version = 'ACF') => {
     const transformedSections = await Promise.all(
       data.sections.map(async (section) => {
@@ -176,7 +166,6 @@ export default function FileImport({ onImport }) {
   }
 
   const validateStructure = (data) => {
-    // Validate the imported data structure
     if (!data.title || typeof data.title !== 'string') {
       return { valid: false, error: 'Missing or invalid "title" field' }
     }
@@ -184,18 +173,14 @@ export default function FileImport({ onImport }) {
       return { valid: false, error: 'Missing or invalid "sections" array' }
     }
     for (const section of data.sections) {
-      if (!section.id || !section.title) {
-        return { valid: false, error: 'Each section needs an "id" and "title"' }
+      if (!section.title) {
+        // Fallback title if empty
+        section.title = section.title || `Section ${section.id || 'Untitled'}`
       }
       if (!Array.isArray(section.passages)) {
         return {
           valid: false,
           error: `Section "${section.title}" needs a "passages" array`,
-        }
-      }
-      for (const passage of section.passages) {
-        if (!passage.gospel) {
-          return { valid: false, error: 'Each passage needs a "gospel" field' }
         }
       }
     }
@@ -225,7 +210,8 @@ export default function FileImport({ onImport }) {
       } else if ((char === '\r' || char === '\n') && !inQuotes) {
         if (char === '\r' && nextChar === '\n') i++
         currentRow.push(currentColumn)
-        if (currentRow.some((c) => c.trim() !== '') || currentRow.length > 1) {
+        // Keep row if it has any non-empty column
+        if (currentRow.some((c) => c.trim() !== '')) {
           rows.push(currentRow)
         }
         currentRow = []
@@ -236,7 +222,9 @@ export default function FileImport({ onImport }) {
     }
     if (currentRow.length > 0 || currentColumn !== '') {
       currentRow.push(currentColumn)
-      rows.push(currentRow)
+      if (currentRow.some((c) => c.trim() !== '')) {
+        rows.push(currentRow)
+      }
     }
 
     if (rows.length < 2)
@@ -245,7 +233,6 @@ export default function FileImport({ onImport }) {
     const headers = rows[0].map((h) => h.trim().toLowerCase())
     const sections = []
 
-    // New format: each row has Title, Matthew, Mark, Luke, John columns
     const titleIdx = headers.indexOf('title')
     const matthewIdx = headers.indexOf('matthew')
     const markIdx = headers.indexOf('mark')
@@ -254,8 +241,14 @@ export default function FileImport({ onImport }) {
 
     for (let i = 1; i < rows.length; i++) {
       const values = rows[i]
-      const sectionTitle = values[titleIdx]?.trim() || ''
-      if (!sectionTitle) continue
+      const sectionTitle = values[titleIdx]?.trim() || `Sessão ${i}`
+      
+      // Allow row even if title is empty, as long as there is some verse data
+      const hasData = [matthewIdx, markIdx, lukeIdx, johnIdx].some(idx => 
+        idx !== -1 && values[idx]?.trim()
+      )
+      
+      if (!hasData && !values[titleIdx]?.trim()) continue
 
       const sectionId = `section-${i}`
 
@@ -263,23 +256,23 @@ export default function FileImport({ onImport }) {
         id: sectionId,
         title: sectionTitle,
         passages: [
-          { gospel: 'matthew', verses: normalizeVerses(values[matthewIdx]) },
-          { gospel: 'mark', verses: normalizeVerses(values[markIdx]) },
-          { gospel: 'luke', verses: normalizeVerses(values[lukeIdx]) },
-          { gospel: 'john', verses: normalizeVerses(values[johnIdx]) },
+          { gospel: 'matthew', verses: matthewIdx !== -1 ? normalizeVerses(values[matthewIdx]) : '' },
+          { gospel: 'mark', verses: markIdx !== -1 ? normalizeVerses(values[markIdx]) : '' },
+          { gospel: 'luke', verses: lukeIdx !== -1 ? normalizeVerses(values[lukeIdx]) : '' },
+          { gospel: 'john', verses: johnIdx !== -1 ? normalizeVerses(values[johnIdx]) : '' },
         ],
       })
     }
 
     return {
-      title: 'Custom Parallel Reading',
+      title: 'Leitura Paralela Personalizada',
       sections,
     }
   }
 
   const processTextInput = async () => {
     if (!textContent.trim()) {
-      setError('Please enter some content')
+      setError('Por favor, insira algum conteúdo')
       return
     }
 
@@ -287,30 +280,20 @@ export default function FileImport({ onImport }) {
     resetStatus()
 
     try {
-      let data
-      if (textInputMode === 'json') {
-        const rawData = JSON.parse(textContent)
-        const validation = validateStructure(rawData)
-        if (!validation.valid) {
-          throw new Error(validation.error)
-        }
-        data = await transformImportData(rawData)
-      } else {
-        const csvData = parseCSV(textContent)
-        const validation = validateStructure(csvData)
-        if (!validation.valid) {
-          throw new Error(validation.error)
-        }
-        data = await transformImportData(csvData)
+      const csvData = parseCSV(textContent)
+      const validation = validateStructure(csvData)
+      if (!validation.valid) {
+        throw new Error(validation.error)
       }
+      const data = await transformImportData(csvData)
 
       setSuccess(
-        `Successfully loaded "${data.title}" with ${data.sections.length} section(s)`
+        `Sucesso: "${data.title}" carregado com ${data.sections.length} sessões`
       )
       onImport(data)
       closeTextInput()
     } catch (err) {
-      setError(err.message || `Failed to parse ${textInputMode.toUpperCase()}`)
+      setError(err.message || 'Erro ao processar CSV')
     } finally {
       setLoading(false)
     }
@@ -321,38 +304,27 @@ export default function FileImport({ onImport }) {
     setLoading(true)
 
     const extension = file.name.split('.').pop().toLowerCase()
-    if (!['json', 'csv'].includes(extension)) {
-      setError('Please upload a .json or .csv file')
+    if (extension !== 'csv') {
+      setError('Por favor, envie um arquivo .csv')
       setLoading(false)
       return
     }
 
     try {
       const content = await file.text()
-      let data
-
-      if (extension === 'json') {
-        const rawData = JSON.parse(content)
-        const validation = validateStructure(rawData)
-        if (!validation.valid) {
-          throw new Error(validation.error)
-        }
-        data = await transformImportData(rawData)
-      } else {
-        const csvData = parseCSV(content)
-        const validation = validateStructure(csvData)
-        if (!validation.valid) {
-          throw new Error(validation.error)
-        }
-        data = await transformImportData(csvData)
+      const csvData = parseCSV(content)
+      const validation = validateStructure(csvData)
+      if (!validation.valid) {
+        throw new Error(validation.error)
       }
+      const data = await transformImportData(csvData)
 
       setSuccess(
-        `Successfully loaded "${data.title}" with ${data.sections.length} section(s)`
+        `Sucesso: "${data.title}" carregado com ${data.sections.length} sessões`
       )
       onImport(data)
     } catch (err) {
-      setError(err.message || 'Failed to parse file')
+      setError(err.message || 'Erro ao processar arquivo')
     } finally {
       setLoading(false)
     }
@@ -381,10 +353,10 @@ export default function FileImport({ onImport }) {
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-slate-900 dark:text-white">
         <Upload size={20} />
-        <h3 className="font-semibold">Import Parallel Verses</h3>
+        <h3 className="font-semibold text-lg">Importar Versículos Paralelos</h3>
       </div>
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Import your own parallel verses from a JSON or CSV file
+        Importe seus próprios versículos paralelos usando um arquivo CSV.
       </p>
 
       {/* Drag & Drop Zone */}
@@ -395,104 +367,88 @@ export default function FileImport({ onImport }) {
         onDrop={handleDrop}
         onClick={() => !loading && fileInputRef.current?.click()}
         className={`
-          relative cursor-pointer rounded-xl border-2 border-dashed p-8
-          transition-colors duration-200 flex flex-col items-center gap-3
+          relative cursor-pointer rounded-xl border-2 border-dashed p-10
+          transition-all duration-300 flex flex-col items-center gap-4
           ${
             dragActive
-              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-              : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
+              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-[1.02]'
+              : 'border-slate-300 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 bg-slate-50/50 dark:bg-slate-900/50'
           }
           ${loading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
-        <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
-          <FileJson size={32} />
-          <span className="text-sm">or</span>
-          <FileSpreadsheet size={32} />
+        <div className="p-4 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
+          <FileSpreadsheet size={40} className="text-indigo-500" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {loading ? 'Processing...' : 'Drop a file here, or click to browse'}
+          <p className="text-base font-medium text-slate-700 dark:text-slate-300">
+            {loading ? 'Processando...' : 'Arraste um arquivo CSV ou clique para navegar'}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-            Supports .json and .csv files
+          <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">
+            Formato: Title, Matthew, Mark, Luke, John
           </p>
         </div>
         <input
           ref={fileInputRef}
           type="file"
-          accept=".json,.csv"
+          accept=".csv"
           onChange={handleChange}
           className="hidden"
           disabled={loading}
         />
       </div>
 
-      {/* Text Input Buttons */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => openTextInput('json')}
-          disabled={loading}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
-        >
-          <Edit3 size={16} />
-          Paste JSON
-        </button>
-        <button
-          onClick={() => openTextInput('csv')}
-          disabled={loading}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
-        >
-          <Edit3 size={16} />
-          Paste CSV
-        </button>
-      </div>
+      {/* Text Input Button */}
+      <button
+        onClick={openTextInput}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all shadow-sm disabled:opacity-50"
+      >
+        <Edit3 size={18} />
+        Colar Conteúdo CSV
+      </button>
 
       {/* Text Input Modal */}
       {showTextInput && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-xl shadow-xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm transition-all">
+          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
               <h4 className="font-semibold text-slate-900 dark:text-white">
-                Paste {textInputMode?.toUpperCase()} Content
+                Colar Conteúdo CSV
               </h4>
               <button
                 onClick={closeTextInput}
                 disabled={loading}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-50"
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
-            <div className="p-4">
+            <div className="p-6">
               <textarea
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
-                placeholder={
-                  textInputMode === 'json'
-                    ? '{\n  "title": "My Custom Reading",\n  "sections": [...]\n}'
-                    : 'Title,Matthew,Mark,Luke,John\nThe Birth,1:18-25,,2:1-20,'
-                }
-                className="w-full h-64 p-3 text-sm font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Title,Matthew,Mark,Luke,John&#10;O Nascimento,1:18-25,,2:1-20,"
+                className="w-full h-80 p-4 text-sm font-mono bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
                 spellCheck={false}
                 disabled={loading}
               />
             </div>
-            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
               <button
                 onClick={closeTextInput}
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors disabled:opacity-50"
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
               >
-                Cancel
+                Cancelar
               </button>
               <button
                 onClick={processTextInput}
                 disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 disabled:opacity-50"
               >
-                {loading && <Loader2 size={16} className="animate-spin" />}
-                Import {textInputMode?.toUpperCase()}
+                {loading && <Loader2 size={18} className="animate-spin" />}
+                Importar CSV
               </button>
             </div>
           </div>
@@ -501,69 +457,45 @@ export default function FileImport({ onImport }) {
 
       {/* Status Messages */}
       {error && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
-          <AlertCircle size={18} className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-300 animate-in fade-in slide-in-from-top-2">
+          <AlertCircle size={20} className="mt-0.5 shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium">Import failed</p>
-            <p className="text-xs mt-1 opacity-80">{error}</p>
+            <p className="text-sm font-semibold">Falha na importação</p>
+            <p className="text-xs mt-1 opacity-90 leading-relaxed">{error}</p>
           </div>
-          <button onClick={resetStatus} className="shrink-0">
-            <X size={14} />
+          <button onClick={resetStatus} className="p-1 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-full transition-colors">
+            <X size={16} />
           </button>
         </div>
       )}
 
       {success && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300">
-          <Check size={18} className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-300 animate-in fade-in slide-in-from-top-2">
+          <Check size={20} className="mt-0.5 shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium">Import successful</p>
-            <p className="text-xs mt-1 opacity-80">{success}</p>
+            <p className="text-sm font-semibold">Importação concluída</p>
+            <p className="text-xs mt-1 opacity-90 leading-relaxed">{success}</p>
           </div>
-          <button onClick={resetStatus} className="shrink-0">
-            <X size={14} />
+          <button onClick={resetStatus} className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-full transition-colors">
+            <X size={16} />
           </button>
         </div>
       )}
 
       {/* File Format Help */}
-      <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-        <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-          Expected File Formats:
+      <div className="border-t border-slate-200 dark:border-slate-800 pt-5">
+        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-3 uppercase tracking-wider">
+          Formato de Arquivo Esperado:
         </p>
-        <div className="space-y-2 text-xs text-slate-500 dark:text-slate-500">
-          <details className="group">
-            <summary className="cursor-pointer hover:text-slate-700 dark:hover:text-slate-300">
-              JSON Format
-            </summary>
-            <pre className="mt-2 p-2 bg-slate-100 dark:bg-slate-800 rounded overflow-x-auto">
-              {`{
-  "title": "My Custom Reading",
-  "sections": [{
-    "id": "section-1",
-    "title": "Section Name",
-    "passages": [
-      { "gospel": "matthew", "verses": "1:1-5" },
-      { "gospel": "mark", "verses": "" },
-      { "gospel": "luke", "verses": "" },
-      { "gospel": "john", "verses": "" }
-    ]
-  }]
-}`}
-            </pre>
-          </details>
-          <details className="group">
-            <summary className="cursor-pointer hover:text-slate-700 dark:hover:text-slate-300">
-              CSV Format
-            </summary>
-            <pre className="mt-2 p-2 bg-slate-100 dark:bg-slate-800 rounded overflow-x-auto">
-              {`Title,Matthew,Mark,Luke,John
-The Preaching of John,"3:7-10
-3:11-12",1:7-8,"3:7-9
-3:15-18",
-Temptations,4:1-11,,4:1-13,`}
-            </pre>
-          </details>
+        <div className="text-xs text-slate-500 dark:text-slate-500">
+          <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 font-mono leading-relaxed">
+            Title,Matthew,Mark,Luke,John<br/>
+            O Pregador,"3:7-10;3:11-12",1:7-8,"3:7-9;3:15-18",<br/>
+            Tentações,4:1-11,,4:1-13,
+          </div>
+          <p className="mt-3 leading-relaxed">
+            * Use ponto e vírgula (;) ou novas linhas para separar múltiplos intervalos de versículos em uma mesma célula.
+          </p>
         </div>
       </div>
     </div>

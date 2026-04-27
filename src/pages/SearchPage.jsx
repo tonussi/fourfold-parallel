@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { Search, ArrowLeft, BookOpen, X, Loader2 } from 'lucide-react'
+import { Search, ArrowLeft, BookOpen, X, Loader2, Info, Search as SearchIcon } from 'lucide-react'
 import {
   parseReference,
   BOOKS_PROTESTANT,
@@ -9,8 +9,8 @@ import {
   fetchVerses,
 } from '../verses'
 import { selectCurrentVersion, setSelectedVersion } from '../store'
-
-// Import sample data for demo purposes
+import { useSidebar } from '../contexts/SidebarContext'
+import { SidebarCard } from '../components/Sidebar'
 
 export default function SearchPage() {
   const navigate = useNavigate()
@@ -19,12 +19,32 @@ export default function SearchPage() {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const { setSidebarContent, setTitle } = useSidebar()
 
   // Redux state
   const selectedPublisher = useSelector(selectCurrentVersion)
 
   // Get all available versions
   const versions = Object.keys(BibleVersionEnum)
+
+  // Update Sidebar content
+  useEffect(() => {
+    setTitle('Busca')
+    setSidebarContent(
+      <div className="space-y-4">
+        <SidebarCard 
+          icon={<SearchIcon size={18} />} 
+          title="Pesquisa Bíblica"
+          description="Digite uma referência (ex: Mateus 1:1) ou palavras-chave para buscar nos evangelhos."
+        />
+        <SidebarCard 
+          icon={<Info size={18} />} 
+          title="Dica de Busca"
+          description="Você pode buscar por capítulos inteiros ou versículos específicos."
+        />
+      </div>
+    )
+  }, [setSidebarContent, setTitle])
 
   // Search function using @verses library
   const handleSearch = async (searchQuery) => {
@@ -168,7 +188,7 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
+    <>
       {/* Header */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
         <div className="max-w-3xl mx-auto px-4 py-4">
@@ -372,6 +392,6 @@ export default function SearchPage() {
           )}
         </div>
       </div>
-    </div>
+    </>
   )
 }
