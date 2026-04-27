@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { SidebarProvider, useSidebar } from './contexts/SidebarContext'
@@ -141,7 +141,10 @@ function ParallelReader() {
   }, [])
 
   // Use imported data if available, otherwise use default (transformed)
-  const displayData = importedData || transformData(parallelData)
+  const displayData = useMemo(
+    () => importedData || transformData(parallelData),
+    [importedData]
+  )
   const displaySections = displayData.sections
   const currentSection = displaySections[currentSectionIndex] || {
     title: 'Carregando...',
@@ -220,7 +223,7 @@ function ParallelReader() {
 
   useEffect(() => {
     if (activeSection === 'read') {
-      setTitle('Leitura')
+      setTitle(currentSection?.title || 'Leitura')
       setSidebarContent(
         <div className="space-y-4">
           <SidebarCard
@@ -250,7 +253,7 @@ function ParallelReader() {
       setTitle('Menu')
       setSidebarContent(null)
     }
-  }, [activeSection, currentSection, displayData, setSidebarContent, setTitle])
+  }, [activeSection, currentSectionIndex, displayData?.title])
 
   const handlePrev = () => {
     if (currentSectionIndex > 0) {
