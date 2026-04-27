@@ -163,11 +163,16 @@ function ParallelReader() {
 
         if (segments.length > 0) {
           const result = await fetchVerses(segments)
-          const acfVerses = result.ACF || result.data?.ACF
+          // The API returns results keyed by the publisher label
+          // Try specific version first, then fallback to first available array
+          const versionVerses = 
+            result[selectedVersion] || 
+            result.data?.[selectedVersion] || 
+            Object.values(result).find(val => Array.isArray(val))
 
-          if (acfVerses && Array.isArray(acfVerses)) {
+          if (versionVerses && Array.isArray(versionVerses)) {
             // Group verses by their book number
-            acfVerses.forEach((v) => {
+            versionVerses.forEach((v) => {
               const gospel = passageMap[v.book]
               if (gospel) {
                 if (!newVerses[gospel]) newVerses[gospel] = []
