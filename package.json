@@ -14,11 +14,14 @@
     "test:run": "vitest run"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.15.2",
+    "bible-passage-reference-parser": "^3.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-redux": "^9.2.0",
     "react-router-dom": "^7.14.1",
-    "bible-passage-reference-parser": "^3.2.0"
+    "redux-persist": "^6.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import VerseText from './VerseText'
 
 const GOSPEL_CONFIG = {
   matthew: {
@@ -51,6 +52,8 @@ export default function MobileGospelTabs({
   onSwipe,
   currentSection,
   getPassageForGospel,
+  highlightedWord,
+  onWordClick,
 }) {
   const [touchStart, setTouchStart] = useState(null)
   const [touchEnd, setTouchEnd] = useState(null)
@@ -259,7 +262,11 @@ export default function MobileGospelTabs({
                     >
                       {verse.verse}
                     </span>
-                    <span className="font-serif">{verse.text}</span>
+                    <VerseText 
+                      text={verse.text} 
+                      highlightedWord={highlightedWord} 
+                      onWordClick={onWordClick} 
+                    />
                   </p>
                 ))}
               </div>

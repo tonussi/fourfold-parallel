@@ -7,6 +7,9 @@ export default function SectionNav({
   onSelect,
   onPrev,
   onNext,
+  selectedVersion,
+  onVersionChange,
+  versions,
 }) {
   const currentSection = sections[currentIndex]
 
@@ -37,6 +40,24 @@ export default function SectionNav({
             <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate px-2">
               {currentIndex + 1}. {currentSection.title}
             </h3>
+          </div>
+
+          {/* Version Selector (Mobile) */}
+          <div className="mr-1">
+            <select
+              value={selectedVersion}
+              onChange={(e) => onVersionChange(e.target.value)}
+              className="appearance-none bg-slate-100 dark:bg-slate-800 
+                       text-slate-900 dark:text-white 
+                       px-2 py-2 rounded-lg text-[10px] font-bold 
+                       focus:outline-none border-none cursor-pointer"
+            >
+              {Object.entries(versions).map(([key, value]) => (
+                <option key={key} value={value}>
+                  {key}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Next Button */}
@@ -124,6 +145,30 @@ export default function SectionNav({
             >
               <ChevronRight size={24} />
             </button>
+
+            {/* Version Selector (Desktop) */}
+            <div className="ml-4 border-l border-slate-200 dark:border-slate-700 pl-4">
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+                  Versão
+                </span>
+                <select
+                  value={selectedVersion}
+                  onChange={(e) => onVersionChange(e.target.value)}
+                  className="appearance-none bg-indigo-50 dark:bg-indigo-900/20 
+                           text-indigo-600 dark:text-indigo-400 
+                           px-4 py-2 rounded-xl text-sm font-bold 
+                           focus:outline-none focus:ring-2 focus:ring-indigo-500 
+                           cursor-pointer border border-indigo-100 dark:border-indigo-800/50"
+                >
+                  {Object.entries(versions).map(([key, value]) => (
+                    <option key={key} value={value}>
+                      {key}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Progress Bar */}

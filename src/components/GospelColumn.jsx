@@ -1,4 +1,5 @@
 import { ScrollText, BookOpen, Bookmark, Share2 } from 'lucide-react'
+import VerseText from './VerseText'
 
 const gospelConfig = {
   matthew: {
@@ -35,7 +36,7 @@ const gospelConfig = {
   },
 }
 
-export default function GospelColumn({ gospel, reference, verses }) {
+export default function GospelColumn({ gospel, reference, verses, highlightedWord, onWordClick }) {
   const config = gospelConfig[gospel]
 
   return (
@@ -105,7 +106,11 @@ export default function GospelColumn({ gospel, reference, verses }) {
                 <sup className={`font-bold mr-1 text-xs ${config.iconColor}`}>
                   {verse.verse}
                 </sup>
-                <span className="font-serif">{verse.text}</span>
+                <VerseText 
+                  text={verse.text} 
+                  highlightedWord={highlightedWord} 
+                  onWordClick={onWordClick} 
+                />
               </p>
             ))}
           </div>

@@ -1,24 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { fetchVerses, searchVersesByText } from '../verses/versesService'
+import { fetchVerses } from '../verses'
 
 // Async thunks for API calls
 export const fetchVerseContent = createAsyncThunk(
   'verses/fetchVerseContent',
-  async ({ reference, version = 'ACF' }, { rejectWithValue }) => {
+  async ({ reference, version }, { getState, rejectWithValue }) => {
     try {
-      const data = await fetchVerses(reference, version)
-      return data
-    } catch (error) {
-      return rejectWithValue(error.message)
-    }
-  }
-)
-
-export const searchVerses = createAsyncThunk(
-  'verses/searchVerses',
-  async ({ query, options = {} }, { rejectWithValue }) => {
-    try {
-      const data = await searchVersesByText(query, options)
+      const selectedVersion =
+        version || getState().config.selectedVersion || 'ACF'
+      const data = await fetchVerses(reference, selectedVersion)
       return data
     } catch (error) {
       return rejectWithValue(error.message)
@@ -31,45 +21,20 @@ const versesSlice = createSlice({
   initialState: {
     // Cached verses by reference
     cachedVerses: {},
-    // Search results
-    searchResults: [],
-    searchQuery: '',
     // Current selection
     currentReference: null,
-    currentVersion: 'ACF',
     // UI state
     loading: false,
     error: null,
-    // Reader state
-    currentSectionIndex: 0,
-    activeGospelTab: 'matthew',
+    // Reader state (moved to config slice)
     // Bookmarks/Favorites (persisted)
     bookmarks: [],
     // Reading history
     readingHistory: [],
-    // Settings
-    preferredVersion: 'ACF',
-    darkMode: false,
   },
   reducers: {
     setCurrentReference: (state, action) => {
       state.currentReference = action.payload
-    },
-    setCurrentVersion: (state, action) => {
-      state.currentVersion = action.payload
-    },
-    setSearchQuery: (state, action) => {
-      state.searchQuery = action.payload
-    },
-    clearSearchResults: (state) => {
-      state.searchResults = []
-      state.searchQuery = ''
-    },
-    setCurrentSectionIndex: (state, action) => {
-      state.currentSectionIndex = action.payload
-    },
-    setActiveGospelTab: (state, action) => {
-      state.activeGospelTab = action.payload
     },
     addBookmark: (state, action) => {
       const bookmark = action.payload
@@ -107,15 +72,6 @@ const versesSlice = createSlice({
     },
     clearHistory: (state) => {
       state.readingHistory = []
-    },
-    setPreferredVersion: (state, action) => {
-      state.preferredVersion = action.payload
-    },
-    toggleDarkMode: (state) => {
-      state.darkMode = !state.darkMode
-    },
-    setDarkMode: (state, action) => {
-      state.darkMode = action.payload
     },
     // Cache management
     cacheVerses: (state, action) => {
@@ -155,36 +111,15 @@ const versesSlice = createSlice({
         state.loading = false
         state.error = action.payload || 'Failed to fetch verses'
       })
-      // Search verses
-      .addCase(searchVerses.pending, (state) => {
-        state.loading = true
-        state.error = null
-      })
-      .addCase(searchVerses.fulfilled, (state, action) => {
-        state.loading = false
-        state.searchResults = action.payload.results || []
-      })
-      .addCase(searchVerses.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.payload || 'Search failed'
-      })
   },
 })
 
 export const {
   setCurrentReference,
-  setCurrentVersion,
-  setSearchQuery,
-  clearSearchResults,
-  setCurrentSectionIndex,
-  setActiveGospelTab,
   addBookmark,
   removeBookmark,
   addToHistory,
   clearHistory,
-  setPreferredVersion,
-  toggleDarkMode,
-  setDarkMode,
   cacheVerses,
   clearCache,
   resetVersesState,

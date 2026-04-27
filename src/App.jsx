@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { ThemeProvider } from './contexts/ThemeContext'
 import Header from './components/Header'
 import SectionNav from './components/SectionNav'
@@ -14,6 +15,14 @@ import {
 } from './verses'
 import { Search } from 'lucide-react'
 import parallelData from './data/parallelVerses.json'
+import {
+  selectCurrentVersion,
+  selectCurrentSectionIndex,
+  selectActiveGospelTab,
+  setSelectedVersion,
+  setCurrentSectionIndex,
+  setActiveGospelTab,
+} from './store'
 import './App.css'
 
 const GOSPELS = ['matthew', 'mark', 'luke', 'john']
@@ -94,14 +103,19 @@ function getBookDisplayTitle(gospel) {
 }
 
 function ParallelReader() {
+  const dispatch = useDispatch()
   const [activeSection, setActiveSection] = useState('read')
-  const [currentSectionIndex, setCurrentSectionIndex] = useState(0)
   const [importedData, setImportedData] = useState(null)
-  const [activeGospelTab, setActiveGospelTab] = useState('matthew')
   const [isMobile, setIsMobile] = useState(false)
   const [sectionVerses, setSectionVerses] = useState({})
   const [isLoadingVerses, setIsLoadingVerses] = useState(false)
-  const [selectedVersion, setSelectedVersion] = useState('ACF')
+  const [highlightedWord, setHighlightedWord] = useState(null)
+
+  // Redux state
+  const selectedVersion = useSelector(selectCurrentVersion)
+  const currentSectionIndex = useSelector(selectCurrentSectionIndex)
+  const activeGospelTab = useSelector(selectActiveGospelTab)
+
   const { sections } = parallelData
 
   // Detect mobile viewport
@@ -149,7 +163,6 @@ function ParallelReader() {
 
         if (segments.length > 0) {
           const result = await fetchVerses(segments)
-          // Handle both result.ACF or result.data?.ACF format
           const acfVerses = result.ACF || result.data?.ACF
 
           if (acfVerses && Array.isArray(acfVerses)) {
@@ -173,7 +186,7 @@ function ParallelReader() {
         setIsLoadingVerses(false)
       }
     },
-    [fetchVerses]
+    [selectedVersion]
   )
 
   // Initial load
@@ -181,7 +194,7 @@ function ParallelReader() {
     if (displaySections && displaySections[currentSectionIndex]) {
       loadVerses(displaySections[currentSectionIndex])
     }
-  }, [])
+  }, [currentSectionIndex, loadVerses])
 
   // Log verses library usage for demonstration
   useEffect(() => {
@@ -207,7 +220,7 @@ function ParallelReader() {
   const handlePrev = () => {
     if (currentSectionIndex > 0) {
       const nextIdx = currentSectionIndex - 1
-      setCurrentSectionIndex(nextIdx)
+      dispatch(setCurrentSectionIndex(nextIdx))
       loadVerses(displaySections[nextIdx])
     }
   }
@@ -215,19 +228,19 @@ function ParallelReader() {
   const handleNext = () => {
     if (currentSectionIndex < displaySections.length - 1) {
       const nextIdx = currentSectionIndex + 1
-      setCurrentSectionIndex(nextIdx)
+      dispatch(setCurrentSectionIndex(nextIdx))
       loadVerses(displaySections[nextIdx])
     }
   }
 
   const handleImport = (data) => {
     setImportedData(data)
-    setCurrentSectionIndex(0)
+    dispatch(setCurrentSectionIndex(0))
   }
 
   const handleResetToDefault = () => {
     setImportedData(null)
-    setCurrentSectionIndex(0)
+    dispatch(setCurrentSectionIndex(0))
   }
 
   // Swipe navigation for mobile
@@ -235,12 +248,12 @@ function ParallelReader() {
     (direction) => {
       const currentIdx = GOSPELS.indexOf(activeGospelTab)
       if (direction === 'left' && currentIdx < GOSPELS.length - 1) {
-        setActiveGospelTab(GOSPELS[currentIdx + 1])
+        dispatch(setActiveGospelTab(GOSPELS[currentIdx + 1]))
       } else if (direction === 'right' && currentIdx > 0) {
-        setActiveGospelTab(GOSPELS[currentIdx - 1])
+        dispatch(setActiveGospelTab(GOSPELS[currentIdx - 1]))
       }
     },
-    [activeGospelTab]
+    [activeGospelTab, dispatch]
   )
 
   const getPassageForGospel = (gospel) => {
@@ -277,9 +290,12 @@ function ParallelReader() {
       <SectionNav
         sections={displaySections}
         currentIndex={currentSectionIndex}
-        onSelect={setCurrentSectionIndex}
+        onSelect={(idx) => dispatch(setCurrentSectionIndex(idx))}
         onPrev={handlePrev}
         onNext={handleNext}
+        selectedVersion={selectedVersion}
+        onVersionChange={(v) => dispatch(setSelectedVersion(v))}
+        versions={BibleVersionEnum}
       />
 
       <main className="flex-1 overflow-hidden">
@@ -291,10 +307,12 @@ function ParallelReader() {
                 gospels={GOSPELS}
                 gospelConfig={GOSPEL_CONFIG}
                 activeTab={activeGospelTab}
-                onTabChange={setActiveGospelTab}
+                onTabChange={(tab) => dispatch(setActiveGospelTab(tab))}
                 onSwipe={handleSwipe}
                 currentSection={currentSection}
                 getPassageForGospel={getPassageForGospel}
+                highlightedWord={highlightedWord}
+                onWordClick={setHighlightedWord}
               />
             ) : (
               /* Desktop: 4-Column Grid */
@@ -309,6 +327,8 @@ function ParallelReader() {
                           gospel={gospel}
                           reference={passage.reference}
                           verses={passage.verses}
+                          highlightedWord={highlightedWord}
+                          onWordClick={setHighlightedWord}
                         />
                       )
                     })}

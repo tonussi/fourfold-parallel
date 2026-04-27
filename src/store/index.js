@@ -9,26 +9,26 @@ import {
   PURGE,
   REGISTER,
 } from 'redux-persist'
-import storage from 'redux-persist/lib/storage/session' // Use sessionStorage
+import storage from 'redux-persist/es/storage/session' // Use sessionStorage
 
 import versesReducer, {
-  setCurrentSectionIndex,
-  setActiveGospelTab,
-  setSearchQuery,
-  clearSearchResults,
   addToHistory,
   addBookmark,
   removeBookmark,
-  setPreferredVersion,
   setCurrentReference,
-  setCurrentVersion,
-  toggleDarkMode,
-  setDarkMode,
   clearHistory,
   cacheVerses,
   clearCache,
   resetVersesState,
 } from './versesSlice'
+import configReducer, {
+  setSelectedVersion,
+  toggleDarkMode as toggleDarkModeConfig,
+  setDarkMode as setDarkModeConfig,
+  setPreferredVersion as setPreferredVersionConfig,
+  setCurrentSectionIndex,
+  setActiveGospelTab,
+} from './configSlice'
 
 // Redux persist configuration for session storage
 const persistConfig = {
@@ -42,6 +42,7 @@ const persistConfig = {
     'preferredVersion',
     'darkMode',
     'currentSectionIndex',
+    'config',
   ],
   // Don't persist these keys (transient data)
   // blacklist: ['loading', 'error', 'searchResults', 'cachedVerses'],
@@ -50,6 +51,7 @@ const persistConfig = {
 // Combine reducers (can add more slices here)
 const rootReducer = combineReducers({
   verses: versesReducer,
+  config: configReducer,
 })
 
 // Create persisted reducer
@@ -75,17 +77,15 @@ export const selectVersesState = (state) => state.verses
 export const selectBookmarks = (state) => state.verses.bookmarks
 export const selectReadingHistory = (state) => state.verses.readingHistory
 export const selectCachedVerses = (state) => state.verses.cachedVerses
-export const selectSearchResults = (state) => state.verses.searchResults
-export const selectSearchQuery = (state) => state.verses.searchQuery
 export const selectCurrentReference = (state) => state.verses.currentReference
-export const selectCurrentVersion = (state) => state.verses.currentVersion
-export const selectPreferredVersion = (state) => state.verses.preferredVersion
-export const selectDarkMode = (state) => state.verses.darkMode
+export const selectCurrentVersion = (state) => state.config.selectedVersion
+export const selectPreferredVersion = (state) => state.config.preferredVersion
+export const selectDarkMode = (state) => state.config.darkMode
 export const selectLoading = (state) => state.verses.loading
 export const selectError = (state) => state.verses.error
 export const selectCurrentSectionIndex = (state) =>
-  state.verses.currentSectionIndex
-export const selectActiveGospelTab = (state) => state.verses.activeGospelTab
+  state.config.currentSectionIndex
+export const selectActiveGospelTab = (state) => state.config.activeGospelTab
 
 // Check if a verse is bookmarked
 export const selectIsBookmarked = (reference, version) => (state) => {
@@ -94,24 +94,21 @@ export const selectIsBookmarked = (reference, version) => (state) => {
   )
 }
 
-// Action creators
 export {
-  setCurrentSectionIndex,
-  setActiveGospelTab,
-  setSearchQuery,
-  clearSearchResults,
   addToHistory,
   addBookmark,
   removeBookmark,
-  setPreferredVersion,
+  resetVersesState,
   setCurrentReference,
-  setCurrentVersion,
-  toggleDarkMode,
-  setDarkMode,
   clearHistory,
   cacheVerses,
   clearCache,
-  resetVersesState,
+  setSelectedVersion,
+  toggleDarkModeConfig as toggleDarkMode,
+  setDarkModeConfig as setDarkMode,
+  setPreferredVersionConfig as setPreferredVersion,
+  setCurrentSectionIndex,
+  setActiveGospelTab,
 }
 
 // Flush persistence (useful for logout)

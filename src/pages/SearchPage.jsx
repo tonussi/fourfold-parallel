@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Search, ArrowLeft, BookOpen, X, Loader2 } from 'lucide-react'
 import {
@@ -7,16 +8,20 @@ import {
   BibleVersionEnum,
   fetchVerses,
 } from '../verses'
+import { selectCurrentVersion, setSelectedVersion } from '../store'
 
 // Import sample data for demo purposes
 
 export default function SearchPage() {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [selectedPublisher, setSelectedVersion] = useState('ACF')
+
+  // Redux state
+  const selectedPublisher = useSelector(selectCurrentVersion)
 
   // Get all available versions
   const versions = Object.keys(BibleVersionEnum)
@@ -187,7 +192,7 @@ export default function SearchPage() {
             {/* Version Selector */}
             <select
               value={selectedPublisher}
-              onChange={(e) => setSelectedVersion(e.target.value)}
+              onChange={(e) => dispatch(setSelectedVersion(e.target.value))}
               className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none sm:w-28"
             >
               {versions.map((v) => (
