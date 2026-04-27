@@ -39,12 +39,17 @@ export default function SearchPage() {
     try {
       // First try to parse as a reference
       const parsedList = parseReference(searchQuery)
+
       if (parsedList && parsedList.length > 0) {
         const firstParsed = parsedList[0]
         // Valid reference - fetch verses from API
-        const data = await fetchVerses(parsedList)
+        const data = await fetchVerses(parsedList, selectedPublisher)
 
-        const resultVerses = data[selectedPublisher] || data.verses || []
+        const resultVerses =
+          data[selectedPublisher] ||
+          data.data?.[selectedPublisher] ||
+          Object.values(data).find((val) => Array.isArray(val)) ||
+          []
 
         if (resultVerses && resultVerses.length > 0) {
           // Group verses by reference
