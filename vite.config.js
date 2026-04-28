@@ -7,19 +7,18 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@verses': path.resolve(__dirname, './src/verses'),
-      '@src': path.resolve(__dirname, './src')
-    }
+      '@src': path.resolve(__dirname, './src'),
+    },
   },
   server: {
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:3000',
         changeOrigin: true,
-        secure: false
-      }
-    }
+        secure: false,
+      },
+    },
   },
   test: {
     globals: true,
@@ -28,7 +27,7 @@ export default defineConfig({
     include: ['src/**/*.test.js', 'src/**/*.test.jsx'],
     coverage: {
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'src/**/*.test.js']
-    }
-  }
+      exclude: ['node_modules/', 'src/**/*.test.js'],
+    },
+  },
 })
