@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 
 com.chrome.devtools.json
+.env
