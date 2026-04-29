@@ -10,8 +10,6 @@ COPY . .
 RUN npm ci
 
 EXPOSE 3000
-EXPOSE 3001
-EXPOSE 8088
 
 RUN chmod +x entrypoint.sh
 CMD ["./entrypoint.sh"]

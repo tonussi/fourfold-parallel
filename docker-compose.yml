@@ -6,10 +6,28 @@ services:
     ports:
       - '3000:3000'
     environment:
+      - VITE_BIBLE_API_URL=${VITE_BIBLE_API_URL}
+      - VITE_BIBLE_API_PORT=${VITE_BIBLE_API_PORT}
+      # Used by vite.config.js proxy (server-side Node process, resolves via Docker DNS)
+      - BIBLE_API_INTERNAL_URL=${BIBLE_API_INTERNAL_URL:-http://bible-api:3001}
       - REDIS_HOST=redis
       - REDIS_PORT=${REDIS_PORT:-6379}
     volumes:
       - ~/.ssh:/root/.ssh:ro
+    depends_on:
+      - redis
+      - bible-api
+
+  bible-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.bible-api
+    ports:
+      - '3001:3001'
+    environment:
+      - PORT=3001
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - redis
 

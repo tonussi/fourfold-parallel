@@ -25,3 +25,6 @@ dist-ssr
 
 com.chrome.devtools.json
 .env
+.agents
+.claude
+skills-lock.json

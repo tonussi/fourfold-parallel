@@ -12,9 +12,13 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    host: true,
     proxy: {
-      '/api': {
-        target: 'http://localhost:3000',
+      // Intercept browser requests to /process and forward them to the
+      // bible-api service. Inside Docker this resolves via Docker DNS;
+      // locally it falls back to http://localhost:3001.
+      '/process': {
+        target: process.env.BIBLE_API_INTERNAL_URL || 'http://localhost:3001',
         changeOrigin: true,
         secure: false,
       },
