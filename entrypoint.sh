@@ -7,6 +7,8 @@ if [ ! -f "/app/bible-api/package.json" ]; then
 fi
 
 cd /app/bible-api
+ls -la db
+sleep 3
 npm ci
 PORT=3001 nohup npm start > /tmp/bible-api.log 2>&1 &
 sleep 3
