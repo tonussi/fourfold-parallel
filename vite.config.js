@@ -1,6 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+console.log(__dirname)
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,16 +19,6 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
-    proxy: {
-      // Intercept browser requests to /process and forward them to the
-      // bible-api service. Inside Docker this resolves via Docker DNS;
-      // locally it falls back to http://localhost:3001.
-      '/process': {
-        target: process.env.BIBLE_API_INTERNAL_URL || 'http://localhost:3001',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
   },
   test: {
     globals: true,
