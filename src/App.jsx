@@ -8,6 +8,7 @@ import GospelColumn from './components/GospelColumn'
 import MobileGospelTabs from './components/MobileGospelTabs'
 import FileImport from './components/FileImport'
 import Sidebar, { SidebarCard } from './components/Sidebar'
+import StatisticsPage from './pages/StatisticsPage'
 import {
   parseReference,
   LABELS,
@@ -15,7 +16,7 @@ import {
   BibleVersionEnum,
   fetchVerses,
 } from './verses'
-import { Search, Download, BookOpen, FileText } from 'lucide-react'
+import { Search, Download, BookOpen, FileText, BarChart3 } from 'lucide-react'
 import parallelData from './data/parallelVerses.json'
 import {
   selectCurrentVersion,
@@ -236,6 +237,16 @@ function ParallelReader() {
             title="Fonte"
             description={displayData.title}
           />
+          <button
+            onClick={() => setActiveSection('statistics')}
+            className="w-full mt-4 flex items-center gap-3 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
+          >
+            <BarChart3 size={18} className="text-indigo-600 dark:text-indigo-400" />
+            <div className="text-left">
+              <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">Estatísticas</p>
+              <p className="text-xs text-indigo-500 dark:text-indigo-400">Sequências de palavras</p>
+            </div>
+          </button>
         </div>
       )
     } else if (activeSection === 'settings') {
@@ -347,6 +358,12 @@ function ParallelReader() {
       />
 
       <main className="flex-1 overflow-hidden">
+        {activeSection === 'statistics' && (
+          <StatisticsPage
+            sections={displaySections}
+            onBack={() => setActiveSection('read')}
+          />
+        )}
         {activeSection === 'read' && (
           <div className="h-full flex flex-col">
             {/* Mobile: Tabbed View with Swipe */}

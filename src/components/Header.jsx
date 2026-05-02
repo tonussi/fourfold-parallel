@@ -8,6 +8,7 @@ import {
   Search,
   Bookmark,
   ExternalLink,
+  BarChart3,
 } from 'lucide-react'
 
 export default function Header({ activeSection, onSectionChange, sections }) {
@@ -16,6 +17,7 @@ export default function Header({ activeSection, onSectionChange, sections }) {
 
   const menuItems = [
     { id: 'read', label: 'Ler', icon: BookOpen },
+    { id: 'statistics', label: 'Estatísticas', icon: BarChart3 },
     { id: 'search', label: 'Buscar', icon: Search },
     { id: 'bookmarks', label: 'Salvos', icon: Bookmark },
     { id: 'settings', label: 'Ajustes', icon: Settings },
