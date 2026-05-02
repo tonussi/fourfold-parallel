@@ -338,6 +338,19 @@ function ParallelReader() {
     return passage
   }
 
+  // Merge current section with fetched verses
+  const mergedCurrentSection = useMemo(() => {
+    if (!currentSection?.passages) return currentSection
+    return {
+      ...currentSection,
+      passages: currentSection.passages.map(passage => ({
+        ...passage,
+        verses: sectionVerses[passage.gospel] || passage.verses || [],
+      })),
+    }
+  }, [currentSection, sectionVerses])
+
+  
   return (
     <>
       <Header
@@ -360,7 +373,8 @@ function ParallelReader() {
       <main className="flex-1 overflow-hidden">
         {activeSection === 'statistics' && (
           <StatisticsPage
-            sections={displaySections}
+            currentSection={mergedCurrentSection}
+            selectedVersion={selectedVersion}
             onBack={() => setActiveSection('read')}
           />
         )}

@@ -1,9 +1,7 @@
 // StatisticsPage - Full page for word sequence statistics
-import { useState, useEffect, useMemo } from 'react'
-import { useSelector } from 'react-redux'
+import { useState, useEffect } from 'react'
 import { useStatisticsWorker, formatSequenceWithReference } from '../hooks/useStatisticsWorker'
-import { selectCurrentVersion, selectCurrentSectionIndex } from '../store'
-import { BarChart3, GitCompare, Hash, Trophy, Zap, ArrowLeft, BookOpen, RefreshCw } from 'lucide-react'
+import { BarChart3, GitCompare, Hash, Trophy, ArrowLeft, BookOpen, RefreshCw } from 'lucide-react'
 
 const GOSPEL_ABBREV = {
   matthew: 'Mt', mark: 'Mc', luke: 'Lc', john: 'Jo',
@@ -222,25 +220,21 @@ function AllGospelsCommonSequences({ stats }) {
   )
 }
 
-function StatisticsPage({ sections, onBack }) {
-  const selectedVersion = useSelector(selectCurrentVersion)
-  const currentSectionIndex = useSelector(selectCurrentSectionIndex)
+function StatisticsPage({ currentSection, selectedVersion, onBack }) {
   const [minLength, setMinLength] = useState(3)
   const [selectedPair, setSelectedPair] = useState('matthew-luke')
   
-  const currentSection = sections?.[currentSectionIndex]
-  
-  // Compute statistics when version, section, or minLength changes
+  // Compute statistics when section or minLength changes
   const { results, isLoading, error, computeSectionStats } = useStatisticsWorker({ 
     minLength,
-    deps: [selectedVersion, currentSectionIndex, minLength],
+    deps: [currentSection, minLength],
   })
   
   useEffect(() => {
-    if (sections && currentSection) {
+    if (currentSection) {
       computeSectionStats(currentSection)
     }
-  }, [sections, currentSection, selectedVersion, minLength, computeSectionStats])
+  }, [currentSection, minLength, computeSectionStats])
   
   const currentStats = results
   const pairSequences = currentStats?.pairs?.[selectedPair]?.sequences || []
