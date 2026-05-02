@@ -89,7 +89,7 @@ export default function FileImport({ onImport }) {
   }
 
   // Fetch verse content from API
-  const fetchVerseContent = async (gospel, versesStr, version = 'ACF') => {
+  const fetchVerseContent = async (gospel, versesStr, version = 'BYZ') => {
     const { reference, ranges } = parseVersesFormat(gospel, versesStr)
 
     if (!reference || ranges.length === 0) {
@@ -125,7 +125,9 @@ export default function FileImport({ onImport }) {
     return { reference, verses: allVerses }
   }
 
-  const transformImportData = async (data, version = 'ACF') => {
+  const transformImportData = async (data, version = 'BYZ') => {
+    if (version === 'BYZ') console.log(data)
+
     const transformedSections = await Promise.all(
       data.sections.map(async (section) => {
         const passagesWithVerses = await Promise.all(
@@ -242,12 +244,12 @@ export default function FileImport({ onImport }) {
     for (let i = 1; i < rows.length; i++) {
       const values = rows[i]
       const sectionTitle = values[titleIdx]?.trim() || `Sessão ${i}`
-      
+
       // Allow row even if title is empty, as long as there is some verse data
-      const hasData = [matthewIdx, markIdx, lukeIdx, johnIdx].some(idx => 
-        idx !== -1 && values[idx]?.trim()
+      const hasData = [matthewIdx, markIdx, lukeIdx, johnIdx].some(
+        (idx) => idx !== -1 && values[idx]?.trim()
       )
-      
+
       if (!hasData && !values[titleIdx]?.trim()) continue
 
       const sectionId = `section-${i}`
@@ -256,10 +258,23 @@ export default function FileImport({ onImport }) {
         id: sectionId,
         title: sectionTitle,
         passages: [
-          { gospel: 'matthew', verses: matthewIdx !== -1 ? normalizeVerses(values[matthewIdx]) : '' },
-          { gospel: 'mark', verses: markIdx !== -1 ? normalizeVerses(values[markIdx]) : '' },
-          { gospel: 'luke', verses: lukeIdx !== -1 ? normalizeVerses(values[lukeIdx]) : '' },
-          { gospel: 'john', verses: johnIdx !== -1 ? normalizeVerses(values[johnIdx]) : '' },
+          {
+            gospel: 'matthew',
+            verses:
+              matthewIdx !== -1 ? normalizeVerses(values[matthewIdx]) : '',
+          },
+          {
+            gospel: 'mark',
+            verses: markIdx !== -1 ? normalizeVerses(values[markIdx]) : '',
+          },
+          {
+            gospel: 'luke',
+            verses: lukeIdx !== -1 ? normalizeVerses(values[lukeIdx]) : '',
+          },
+          {
+            gospel: 'john',
+            verses: johnIdx !== -1 ? normalizeVerses(values[johnIdx]) : '',
+          },
         ],
       })
     }
@@ -382,7 +397,9 @@ export default function FileImport({ onImport }) {
         </div>
         <div className="text-center">
           <p className="text-base font-medium text-slate-700 dark:text-slate-300">
-            {loading ? 'Processando...' : 'Arraste um arquivo CSV ou clique para navegar'}
+            {loading
+              ? 'Processando...'
+              : 'Arraste um arquivo CSV ou clique para navegar'}
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">
             Formato: Title, Matthew, Mark, Luke, John
@@ -463,7 +480,10 @@ export default function FileImport({ onImport }) {
             <p className="text-sm font-semibold">Falha na importação</p>
             <p className="text-xs mt-1 opacity-90 leading-relaxed">{error}</p>
           </div>
-          <button onClick={resetStatus} className="p-1 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-full transition-colors">
+          <button
+            onClick={resetStatus}
+            className="p-1 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-full transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
@@ -476,7 +496,10 @@ export default function FileImport({ onImport }) {
             <p className="text-sm font-semibold">Importação concluída</p>
             <p className="text-xs mt-1 opacity-90 leading-relaxed">{success}</p>
           </div>
-          <button onClick={resetStatus} className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-full transition-colors">
+          <button
+            onClick={resetStatus}
+            className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-full transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
@@ -489,12 +512,15 @@ export default function FileImport({ onImport }) {
         </p>
         <div className="text-xs text-slate-500 dark:text-slate-500">
           <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 font-mono leading-relaxed">
-            Title,Matthew,Mark,Luke,John<br/>
-            O Pregador,"3:7-10;3:11-12",1:7-8,"3:7-9;3:15-18",<br/>
+            Title,Matthew,Mark,Luke,John
+            <br />
+            O Pregador,"3:7-10;3:11-12",1:7-8,"3:7-9;3:15-18",
+            <br />
             Tentações,4:1-11,,4:1-13,
           </div>
           <p className="mt-3 leading-relaxed">
-            * Use ponto e vírgula (;) ou novas linhas para separar múltiplos intervalos de versículos em uma mesma célula.
+            * Use ponto e vírgula (;) ou novas linhas para separar múltiplos
+            intervalos de versículos em uma mesma célula.
           </p>
         </div>
       </div>

@@ -1,9 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
-  selectedVersion: 'ACF',
+  selectedVersion: 'BYZ',
   darkMode: false,
-  preferredVersion: 'ACF',
+  preferredVersion: 'BYZ',
   currentSectionIndex: 0,
   activeGospelTab: 'matthew',
 }
@@ -33,7 +33,8 @@ const configSlice = createSlice({
   },
 })
 
-export const selectCurrentSectionIndex = (state) => state.config.currentSectionIndex
+export const selectCurrentSectionIndex = (state) =>
+  state.config.currentSectionIndex
 export const selectActiveGospelTab = (state) => state.config.activeGospelTab
 
 export const {
