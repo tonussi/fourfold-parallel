@@ -1,15 +1,50 @@
+@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap');
 
-@import "tailwindcss";
+
+/* DejaVu Sans Condensed */
+@font-face {
+  font-family: 'DejaVu Sans Condensed';
+  src: url('./assets/fonts/DejaVuSansCondensed.ttf');
+}
+@font-face {
+  font-family: 'DejaVu Sans Condensed';
+  font-weight: bold;
+  src: url('./assets/fonts/DejaVuSansCondensed-Bold.ttf');
+}
+@font-face {
+  font-family: 'DejaVu Sans Condensed';
+  font-style: italic;
+  src: url('./assets/fonts/DejaVuSansCondensed-Oblique.ttf');
+}
+@font-face {
+  font-family: 'DejaVu Sans Condensed';
+  font-weight: bold;
+  font-style: italic;
+  src: url('./assets/fonts/DejaVuSansCondensed-BoldOblique.ttf');
+}
+
+/* Koine Greek Font */
+@font-face {
+  font-family: 'KoineGreek';
+  src: url('./assets/fonts/KoineGreek.ttf');
+}
+
 
 @theme {
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-serif: 'Merriweather', Georgia, serif;
+  --font-dejavu: 'DejaVu Sans Condensed', sans-serif;
+  --font-koine: 'KoineGreek', serif;
   
   --color-gospel-matthew: #3b82f6;
   --color-gospel-mark: #ef4444;
   --color-gospel-luke: #10b981;
   --color-gospel-john: #8b5cf6;
+}
+
+:root {
+  --verse-font-family: var(--font-serif);
 }
 
 @layer base {
@@ -67,6 +102,10 @@
   
   html.dark .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: rgb(71 85 105);
+  }
+  
+  .verse-font {
+    font-family: var(--verse-font-family);
   }
   
   .verse-text {

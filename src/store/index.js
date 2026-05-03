@@ -28,6 +28,7 @@ import configReducer, {
   setPreferredVersion as setPreferredVersionConfig,
   setCurrentSectionIndex,
   setActiveGospelTab,
+  setSelectedFont,
 } from './configSlice'
 
 // Redux persist configuration for session storage
@@ -86,6 +87,7 @@ export const selectError = (state) => state.verses.error
 export const selectCurrentSectionIndex = (state) =>
   state.config.currentSectionIndex
 export const selectActiveGospelTab = (state) => state.config.activeGospelTab
+export const selectSelectedFont = (state) => state.config.selectedFont
 
 // Check if a verse is bookmarked
 export const selectIsBookmarked = (reference, version) => (state) => {
@@ -109,6 +111,7 @@ export {
   setPreferredVersionConfig as setPreferredVersion,
   setCurrentSectionIndex,
   setActiveGospelTab,
+  setSelectedFont,
 }
 
 // Flush persistence (useful for logout)

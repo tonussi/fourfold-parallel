@@ -7,7 +7,7 @@ export const fetchVerseContent = createAsyncThunk(
   async ({ reference, version }, { getState, rejectWithValue }) => {
     try {
       const selectedVersion =
-        version || getState().config.selectedVersion || 'BYZ'
+        version || getState().config.selectedVersion || 'OGNT'
       const data = await fetchVerses(reference, selectedVersion)
       return data
     } catch (error) {

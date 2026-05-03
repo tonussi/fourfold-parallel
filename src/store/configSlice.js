@@ -1,11 +1,12 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
-  selectedVersion: 'BYZ',
+  selectedVersion: 'OGNT',
   darkMode: false,
-  preferredVersion: 'BYZ',
+  preferredVersion: 'OGNT',
   currentSectionIndex: 0,
   activeGospelTab: 'matthew',
+  selectedFont: 'serif',
 }
 
 const configSlice = createSlice({
@@ -30,12 +31,16 @@ const configSlice = createSlice({
     setActiveGospelTab: (state, action) => {
       state.activeGospelTab = action.payload
     },
+    setSelectedFont: (state, action) => {
+      state.selectedFont = action.payload
+    },
   },
 })
 
 export const selectCurrentSectionIndex = (state) =>
   state.config.currentSectionIndex
 export const selectActiveGospelTab = (state) => state.config.activeGospelTab
+export const selectSelectedFont = (state) => state.config.selectedFont
 
 export const {
   setSelectedVersion,
@@ -44,6 +49,7 @@ export const {
   setPreferredVersion,
   setCurrentSectionIndex,
   setActiveGospelTab,
+  setSelectedFont,
 } = configSlice.actions
 
 export default configSlice.reducer

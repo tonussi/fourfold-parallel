@@ -14,7 +14,7 @@ export default function VerseText({ text, highlightedWord, onWordClick }) {
   const normalizedHighlighted = highlightedWord ? normalize(highlightedWord) : null
 
   return (
-    <span className="font-serif">
+    <span className="verse-font">
       {tokens.map((token, i) => {
         // Match Greek (α-ωΑ-Ω), Latin, Portuguese accented, or numbers
         const isWord = /^[α-ωΑ-Ωa-zA-Zà-úÀ-Ú0-9]+$/.test(token)

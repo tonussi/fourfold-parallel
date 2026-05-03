@@ -89,7 +89,7 @@ export default function FileImport({ onImport }) {
   }
 
   // Fetch verse content from API
-  const fetchVerseContent = async (gospel, versesStr, version = 'BYZ') => {
+  const fetchVerseContent = async (gospel, versesStr, version = 'OGNT') => {
     const { reference, ranges } = parseVersesFormat(gospel, versesStr)
 
     if (!reference || ranges.length === 0) {
@@ -125,9 +125,7 @@ export default function FileImport({ onImport }) {
     return { reference, verses: allVerses }
   }
 
-  const transformImportData = async (data, version = 'BYZ') => {
-    if (version === 'BYZ') console.log(data)
-
+  const transformImportData = async (data, version = 'OGNT') => {
     const transformedSections = await Promise.all(
       data.sections.map(async (section) => {
         const passagesWithVerses = await Promise.all(

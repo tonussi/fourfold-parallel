@@ -1,0 +1,7 @@
+@font-face {
+  font-family: 'KoineGreek';
+  src: url('KoineGreek.ttf');
+}
+body{
+  font-family:'KoineGreek';
+}

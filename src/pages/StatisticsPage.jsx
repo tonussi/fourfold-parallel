@@ -123,7 +123,7 @@ function SequencesList({ sequences, pair, showReferences = true }) {
               </span>
               
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">
+                <p className="verse-font text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">
                   "{formatted.words}"
                 </p>
                 
@@ -146,6 +146,11 @@ function SequencesList({ sequences, pair, showReferences = true }) {
                     }`}>
                       {refs[g2]}
                     </span>
+                    {formatted.similarity && (
+                      <span className="ml-auto text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded border border-amber-100 dark:border-amber-800/50">
+                        {formatted.similarity}% similar
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -197,7 +202,7 @@ function AllGospelsCommonSequences({ stats }) {
               {seq.length}w
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-violet-700 dark:text-violet-300 italic">
+              <p className="verse-font text-sm text-violet-700 dark:text-violet-300 italic">
                 "{seq.words.join(' ')}"
               </p>
               <div className="flex items-center gap-2 mt-2 text-xs flex-wrap">
@@ -222,19 +227,21 @@ function AllGospelsCommonSequences({ stats }) {
 
 function StatisticsPage({ currentSection, selectedVersion, onBack }) {
   const [minLength, setMinLength] = useState(3)
+  const [mode, setMode] = useState('exact')
   const [selectedPair, setSelectedPair] = useState('matthew-luke')
   
-  // Compute statistics when section or minLength changes
+  // Compute statistics when section, minLength or mode changes
   const { results, isLoading, error, computeSectionStats } = useStatisticsWorker({ 
     minLength,
-    deps: [currentSection, minLength],
+    mode,
+    deps: [currentSection, minLength, mode],
   })
   
   useEffect(() => {
     if (currentSection) {
       computeSectionStats(currentSection)
     }
-  }, [currentSection, minLength, computeSectionStats])
+  }, [currentSection, minLength, mode, computeSectionStats])
   
   const currentStats = results
   const pairSequences = currentStats?.pairs?.[selectedPair]?.sequences || []
@@ -272,7 +279,7 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
         </div>
         
         {/* Controls */}
-        <div className="px-4 pb-3 flex items-center gap-4">
+        <div className="px-4 pb-3 flex flex-wrap items-center gap-6">
           <div className="flex items-center gap-2">
             <label className="text-sm text-slate-600 dark:text-slate-400">
               Mín. palavras:
@@ -286,6 +293,29 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
+          </div>
+
+          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+            <button
+              onClick={() => setMode('exact')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                mode === 'exact'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+            >
+              Exato
+            </button>
+            <button
+              onClick={() => setMode('relaxed')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                mode === 'relaxed'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+            >
+              Relaxado
+            </button>
           </div>
         </div>
       </div>

@@ -1,0 +1,22 @@
+/* Greek, Hebrew, ExtendedLatin */
+@font-face {
+  font-family: 'DejaVu Sans Condensed';
+  src: url('DejaVuSansCondensed.ttf');
+}
+@font-face {
+  font-family: 'DejaVu Sans Condensed';
+  font-weight: bold;
+  src: url('DejaVuSansCondensed-Bold.ttf');
+}
+@font-face {
+  font-family: 'DejaVu Sans Condensed';
+  font-style: italic;
+  src: url('DejaVuSansCondensed-Oblique.ttf');
+}
+@font-face {
+  font-family: 'DejaVu Sans Condensed';
+  font-weight: bold;
+  font-style: italic;
+  src: url('DejaVuSansCondensed-BoldOblique.ttf');
+}
+body{font-family:'DejaVu Sans Condensed'}

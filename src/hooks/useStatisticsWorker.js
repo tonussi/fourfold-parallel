@@ -29,6 +29,27 @@ function getWorker() {
         for (let i = map.length - 1; i >= 0; i--) { if (map[i].wordIdx <= idx) return map[i].verse; }
         return map[0]?.verse || 1;
       };
+      // Levenshtein distance
+      const levDist = (a, b) => {
+        const m = [];
+        for (let i = 0; i <= b.length; i++) m[i] = [i];
+        for (let j = 0; j <= a.length; j++) m[0][j] = j;
+        for (let i = 1; i <= b.length; i++) {
+          for (let j = 1; j <= a.length; j++) {
+            m[i][j] = b[i - 1] === a[j - 1] ? m[i - 1][j - 1] : 1 + Math.min(m[i - 1][j], m[i][j - 1], m[i - 1][j - 1]);
+          }
+        }
+        return m[b.length][a.length];
+      };
+      // Check if two words are similar
+      const areSimilar = (w1, w2, thresh = 0.2) => {
+        if (w1 === w2) return true;
+        const maxLen = Math.max(w1.length, w2.length);
+        if (maxLen === 0) return true;
+        if (maxLen <= 3) return levDist(w1, w2) <= 1;
+        return (levDist(w1, w2) / maxLen) <= thresh;
+      };
+      // Exact matching
       const findMatchingSequences = (w1, w2, minLen, vwm1, vwm2) => {
         const matches = [];
         if (w1.length < minLen || w2.length < minLen) return matches;
@@ -43,7 +64,33 @@ function getWorker() {
         }
         return matches;
       };
-      const computeStatistics = (gvw, minLen) => {
+      // Relaxed (similar) matching
+      const findRelaxedMatchingSequences = (w1, w2, minLen, vwm1, vwm2, thresh = 0.2) => {
+        const matches = [];
+        if (w1.length < minLen || w2.length < minLen) return matches;
+        for (let i = 0; i <= w1.length - minLen; i++) {
+          for (let j = 0; j <= w2.length - minLen; j++) {
+            let len = 0, totalSim = 0;
+            while (i + len < w1.length && j + len < w2.length) {
+              const wx = w1[i + len], wy = w2[j + len];
+              if (areSimilar(wx, wy, thresh)) { 
+                const d = wx === wy ? 0 : levDist(wx, wy);
+                const ml = Math.max(wx.length, wy.length);
+                totalSim += ml === 0 ? 1 : 1 - (d / ml);
+                len++; 
+              } else break;
+            }
+            if (len >= minLen) {
+              const avgSim = Math.round((totalSim / len) * 100);
+              if (!matches.some(m => m.start1 === i && m.start2 === j)) {
+                matches.push({ words: w1.slice(i, i + len), words2: w2.slice(j, j + len), length: len, start1: i, start2: j, verse1: getVerseAtWordIdx(vwm1, i), verse2: getVerseAtWordIdx(vwm2, j), similarity: avgSim });
+              }
+            }
+          }
+        }
+        return matches;
+      };
+      const computeStatistics = (gvw, minLen, mode = 'exact', thresh = 0.2) => {
         const gList = ['matthew','mark','luke','john'].filter(g => gvw[g]);
         const tok = {}, vwm = {};
         gList.forEach(g => {
@@ -53,12 +100,14 @@ function getWorker() {
           tok[g] = tokenize(t);
           vwm[g] = buildVerseWordMap(v);
         });
-        const stats = { totalWords: {}, summary: { totalMatches: 0, totalMatchingWords: 0, uniqueSequences: [] }, pairs: {} };
+        const stats = { totalWords: {}, summary: { totalMatches: 0, totalMatchingWords: 0, uniqueSequences: [] }, pairs: {}, mode: mode };
         gList.forEach(g => { stats.totalWords[g] = tok[g].length; });
         for (let i = 0; i < gList.length; i++) {
           for (let j = i + 1; j < gList.length; j++) {
             const g1 = gList[i], g2 = gList[j], key = g1 + '-' + g2;
-            const m = findMatchingSequences(tok[g1], tok[g2], minLen, vwm[g1], vwm[g2]);
+            const m = mode === 'relaxed' 
+              ? findRelaxedMatchingSequences(tok[g1], tok[g2], minLen, vwm[g1], vwm[g2], thresh)
+              : findMatchingSequences(tok[g1], tok[g2], minLen, vwm[g1], vwm[g2]);
             const total = m.reduce((s, x) => s + x.length, 0);
             stats.pairs[key] = { count: m.length, totalWords: total, sequences: m, matchPercentage: { [g1]: tok[g1].length > 0 ? ((total / tok[g1].length) * 100).toFixed(1) : 0, [g2]: tok[g2].length > 0 ? ((total / tok[g2].length) * 100).toFixed(1) : 0 } };
           }
@@ -86,14 +135,14 @@ function getWorker() {
         const { type, payload, id } = e.data;
         try {
           if (type === 'COMPUTE_STATISTICS') {
-            self.postMessage({ type: 'STATISTICS_RESULT', id, payload: computeStatistics(payload.gospels, payload.minLength || 3) });
+            self.postMessage({ type: 'STATISTICS_RESULT', id, payload: computeStatistics(payload.gospels, payload.minLength || 3, payload.mode || 'exact', payload.similarityThreshold || 0.2) });
           } else if (type === 'COMPUTE_SECTION_STATISTICS') {
             const results = payload.sections.map((section) => {
               const gvw = {};
               section.passages?.forEach(p => {
                 if (p.verses && Array.isArray(p.verses)) gvw[p.gospel] = { text: p.verses.map(v => v.text).join(' '), verses: p.verses };
               });
-              return { sectionId: section.id, sectionTitle: section.title, ...computeStatistics(gvw, payload.minLength || 3) };
+              return { sectionId: section.id, sectionTitle: section.title, ...computeStatistics(gvw, payload.minLength || 3, payload.mode || 'exact', payload.similarityThreshold || 0.2) };
             });
             self.postMessage({ type: 'SECTION_STATS_RESULT', id, payload: results });
           } else {
@@ -151,24 +200,29 @@ function sendToWorker(type, payload) {
 /**
  * Hook for computing word sequence statistics
  * @param {Object} options
- * @param {boolean} options.autoCompute - auto-compute when data changes
  * @param {number} options.minLength - minimum matching word sequence length
- * @param {*} options.deps - dependencies that trigger recalculation
+ * @param {string} options.mode - 'exact' or 'relaxed' (fuzzy matching)
+ * @param {number} options.similarityThreshold - max edit distance ratio for relaxed mode
  */
-export function useStatisticsWorker({ autoCompute = false, minLength = 3, deps = null } = {}) {
+export function useStatisticsWorker({ minLength = 3, mode = 'exact', similarityThreshold = 0.2 } = {}) {
   const [results, setResults] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const minLengthRef = useRef(minLength)
-  const depsRef = useRef(deps)
+  const modeRef = useRef(mode)
+  const thresholdRef = useRef(similarityThreshold)
 
   useEffect(() => {
     minLengthRef.current = minLength
   }, [minLength])
 
   useEffect(() => {
-    depsRef.current = deps
-  }, [deps])
+    modeRef.current = mode
+  }, [mode])
+
+  useEffect(() => {
+    thresholdRef.current = similarityThreshold
+  }, [similarityThreshold])
 
   const computeSectionStats = useCallback(async (section) => {
     if (!section) return null
@@ -178,6 +232,8 @@ export function useStatisticsWorker({ autoCompute = false, minLength = 3, deps =
       const result = await sendToWorker('COMPUTE_SECTION_STATISTICS', {
         sections: [section],
         minLength: minLengthRef.current,
+        mode: modeRef.current,
+        similarityThreshold: thresholdRef.current,
       })
       setResults(result[0])
       return result[0]
@@ -197,6 +253,8 @@ export function useStatisticsWorker({ autoCompute = false, minLength = 3, deps =
       const result = await sendToWorker('COMPUTE_SECTION_STATISTICS', {
         sections,
         minLength: minLengthRef.current,
+        mode: modeRef.current,
+        similarityThreshold: thresholdRef.current,
       })
       setResults(result)
       return result
@@ -216,6 +274,8 @@ export function useStatisticsWorker({ autoCompute = false, minLength = 3, deps =
       const result = await sendToWorker('COMPUTE_STATISTICS', {
         gospels,
         minLength: minLengthRef.current,
+        mode: modeRef.current,
+        similarityThreshold: thresholdRef.current,
       })
       setResults(result)
       return result
@@ -238,53 +298,28 @@ export function useStatisticsWorker({ autoCompute = false, minLength = 3, deps =
 }
 
 /**
- * Format statistics for display with verse references
- */
-export function formatStatistics(stats, gospelLabel = 'Mt') {
-  if (!stats) return null
-  
-  const GOSPEL_ABBREV = {
-    matthew: 'Mt', mark: 'Mc', luke: 'Lc', john: 'Jo',
-  }
-  
-  return {
-    summary: {
-      totalPairs: Object.keys(stats.pairs || {}).length,
-      totalMatchingSequences: stats.summary?.totalMatches || 0,
-      totalMatchingWords: stats.summary?.totalMatchingWords || 0,
-    },
-    pairs: Object.entries(stats.pairs || {}).map(([key, data]) => ({
-      pair: key,
-      matches: data.count,
-      totalWords: data.totalWords,
-      percentage: data.matchPercentage,
-    })),
-    commonSequences: (stats.summary?.uniqueSequences || []).map(seq => {
-      const [g1, g2] = Object.keys(stats.pairs || {})[0]?.split('-') || ['matthew', 'mark']
-      return {
-        words: seq.words.join(' '),
-        length: seq.length,
-        reference: `${GOSPEL_ABBREV[g1] || g1} ${seq.verse1 || '?'}`,
-      }
-    }),
-  }
-}
-
-/**
- * Format a sequence with its verse references for a specific gospel pair
+ * Format a sequence for display with its references
  */
 export function formatSequenceWithReference(seq, g1, g2) {
-  const GOSPEL_ABBREV = {
-    matthew: 'Mt', mark: 'Mc', luke: 'Lc', john: 'Jo',
-  }
+  if (!seq) return { words: '', references: {} }
   
-  return {
-    words: seq.words.join(' '),
-    length: seq.length,
-    references: {
-      [g1]: `${GOSPEL_ABBREV[g1] || g1} ${seq.verse1 || '?'}`,
-      [g2]: `${GOSPEL_ABBREV[g2] || g2} ${seq.verse2 || '?'}`,
-    },
+  const words = Array.isArray(seq.words) ? seq.words.join(' ') : (seq.words || '')
+  const words2 = Array.isArray(seq.words2) ? seq.words2.join(' ') : null
+  
+  const references = {}
+  if (g1) references[g1] = seq.verse1 || seq[`verse_${g1}`]
+  if (g2) references[g2] = seq.verse2 || seq[`verse_${g2}`]
+  
+  // Add all gospel references if they exist
+  ;['matthew', 'mark', 'luke', 'john'].forEach(g => {
+    const ref = seq[`verse_${g}`] || seq[`verse${g.charAt(0).toUpperCase() + g.slice(1)}`]
+    if (ref) references[g] = ref
+  })
+  
+  return { 
+    words: words2 && words !== words2 ? `${words} ≈ ${words2}` : words, 
+    references,
+    similarity: seq.similarity 
   }
 }
 

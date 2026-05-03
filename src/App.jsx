@@ -25,6 +25,8 @@ import {
   setSelectedVersion,
   setCurrentSectionIndex,
   setActiveGospelTab,
+  selectSelectedFont,
+  setSelectedFont,
 } from './store'
 import './App.css'
 
@@ -130,6 +132,21 @@ function ParallelReader() {
   const selectedVersion = useSelector(selectCurrentVersion)
   const currentSectionIndex = useSelector(selectCurrentSectionIndex)
   const activeGospelTab = useSelector(selectActiveGospelTab)
+  const selectedFont = useSelector(selectSelectedFont)
+
+  // Update verse font CSS variable when selected font changes
+  useEffect(() => {
+    const fontMap = {
+      serif: 'var(--font-serif)',
+      sans: 'var(--font-sans)',
+      dejavu: 'var(--font-dejavu)',
+      koine: 'var(--font-koine)',
+    }
+    document.documentElement.style.setProperty(
+      '--verse-font-family',
+      fontMap[selectedFont] || fontMap.serif
+    )
+  }, [selectedFont])
 
   const { sections } = parallelData
 
@@ -368,6 +385,8 @@ function ParallelReader() {
         selectedVersion={selectedVersion}
         onVersionChange={(v) => dispatch(setSelectedVersion(v))}
         versions={BibleVersionEnum}
+        selectedFont={selectedFont}
+        onFontChange={(f) => dispatch(setSelectedFont(f))}
       />
 
       <main className="flex-1 overflow-hidden">

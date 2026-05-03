@@ -52,13 +52,70 @@ function getVerseAtWordIdx(verseWordMap, wordIdx) {
 }
 
 /**
+ * Calculate Levenshtein distance between two strings
+ * @param {string} a 
+ * @param {string} b 
+ * @returns {number}
+ */
+function levenshteinDistance(a, b) {
+  const matrix = []
+  
+  // Initialize
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i]
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j
+  }
+  
+  // Fill in the rest
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b[i - 1] === a[j - 1]) {
+        matrix[i][j] = matrix[i - 1][j - 1]
+      } else {
+        matrix[i][j] = 1 + Math.min(
+          matrix[i - 1][j],     // deletion
+          matrix[i][j - 1],     // insertion
+          matrix[i - 1][j - 1]  // substitution
+        )
+      }
+    }
+  }
+  
+  return matrix[b.length][a.length]
+}
+
+/**
+ * Check if two words are similar based on edit distance threshold
+ * @param {string} word1 
+ * @param {string} word2 
+ * @param {number} threshold - max allowed edit distance
+ * @returns {boolean}
+ */
+function areSimilar(word1, word2, threshold = 0.2) {
+  if (word1 === word2) return true
+  
+  const maxLen = Math.max(word1.length, word2.length)
+  if (maxLen === 0) return true
+  
+  // For very short words, be stricter
+  if (maxLen <= 3) {
+    return levenshteinDistance(word1, word2) <= 1
+  }
+  
+  const distance = levenshteinDistance(word1, word2)
+  return (distance / maxLen) <= threshold
+}
+
+/**
  * Find all sequences of N consecutive identical words between two texts
  * @param {string[]} words1 
  * @param {string[]} words2 
  * @param {number} minLength - minimum sequence length (default 3)
  * @param {Array} verseWordMap1 - for verse reference tracking
  * @param {Array} verseWordMap2 - for verse reference tracking
- * @returns {Array<{words: string[], length: number, start1: number, start2: number, verse1: number, verse2: number}>}
+ * @returns {Array<{words: string[], length: number, start1: number, start2: number, verse1: number, verse2: number, similarity?: number}>}
  */
 function findMatchingSequences(words1, words2, minLength = 3, verseWordMap1 = [], verseWordMap2 = []) {
   const matches = []
@@ -98,12 +155,79 @@ function findMatchingSequences(words1, words2, minLength = 3, verseWordMap1 = []
 }
 
 /**
+ * Find all sequences of N consecutive similar words between two texts (relaxed mode)
+ * @param {string[]} words1 
+ * @param {string[]} words2 
+ * @param {number} minLength - minimum sequence length (default 3)
+ * @param {Array} verseWordMap1 - for verse reference tracking
+ * @param {Array} verseWordMap2 - for verse reference tracking
+ * @param {number} similarityThreshold - max edit distance ratio (default 0.2)
+ * @returns {Array<{words: string[], length: number, start1: number, start2: number, verse1: number, verse2: number, similarity: number}>}
+ */
+function findRelaxedMatchingSequences(words1, words2, minLength = 3, verseWordMap1 = [], verseWordMap2 = [], similarityThreshold = 0.2) {
+  const matches = []
+  
+  if (words1.length < minLength || words2.length < minLength) {
+    return matches
+  }
+
+  for (let i = 0; i <= words1.length - minLength; i++) {
+    for (let j = 0; j <= words2.length - minLength; j++) {
+      let matchLen = 0
+      let totalSimilarity = 0
+      
+      // Try to match as many consecutive similar words as possible
+      while (
+        i + matchLen < words1.length &&
+        j + matchLen < words2.length
+      ) {
+        const w1 = words1[i + matchLen]
+        const w2 = words2[j + matchLen]
+        
+        if (areSimilar(w1, w2, similarityThreshold)) {
+          // Calculate actual similarity score for this word pair
+          const dist = w1 === w2 ? 0 : levenshteinDistance(w1, w2)
+          const maxLen = Math.max(w1.length, w2.length)
+          const sim = maxLen === 0 ? 1 : 1 - (dist / maxLen)
+          
+          totalSimilarity += sim
+          matchLen++
+        } else {
+          break
+        }
+      }
+      
+      if (matchLen >= minLength) {
+        const avgSimilarity = totalSimilarity / matchLen
+        const isDuplicate = matches.some(m => m.start1 === i && m.start2 === j)
+        if (!isDuplicate) {
+          matches.push({
+            words: words1.slice(i, i + matchLen),
+            words2: words2.slice(j, j + matchLen),
+            length: matchLen,
+            start1: i,
+            start2: j,
+            verse1: getVerseAtWordIdx(verseWordMap1, i),
+            verse2: getVerseAtWordIdx(verseWordMap2, j),
+            similarity: Math.round(avgSimilarity * 100),
+          })
+        }
+      }
+    }
+  }
+  
+  return matches
+}
+
+/**
  * Find all unique identical word sequences across multiple gospels
  * @param {Object} gospelsWithVerses - { matthew: {text, verses}, mark: {text, verses}, ... }
  * @param {number} minLength - minimum sequence length (default 3)
+ * @param {string} mode - 'exact' or 'relaxed' (default 'exact')
+ * @param {number} similarityThreshold - for relaxed mode, max edit distance ratio
  * @returns {Object} statistics for each pair and all gospels combined
  */
-function computeStatistics(gospelsWithVerses, minLength = 3) {
+function computeStatistics(gospelsWithVerses, minLength = 3, mode = 'exact', similarityThreshold = 0.2) {
   const gospelList = ['matthew', 'mark', 'luke', 'john'].filter(g => gospelsWithVerses[g])
   const tokenized = {}
   const verseWordMaps = {}
@@ -124,6 +248,7 @@ function computeStatistics(gospelsWithVerses, minLength = 3) {
       uniqueSequences: [],
     },
     pairs: {},
+    mode: mode,
   }
 
   gospelList.forEach(g => {
@@ -136,13 +261,22 @@ function computeStatistics(gospelsWithVerses, minLength = 3) {
       const g2 = gospelList[j]
       const pairKey = `${g1}-${g2}`
       
-      const matches = findMatchingSequences(
-        tokenized[g1], 
-        tokenized[g2], 
-        minLength,
-        verseWordMaps[g1],
-        verseWordMaps[g2]
-      )
+      const matches = mode === 'relaxed'
+        ? findRelaxedMatchingSequences(
+            tokenized[g1], 
+            tokenized[g2], 
+            minLength,
+            verseWordMaps[g1],
+            verseWordMaps[g2],
+            similarityThreshold
+          )
+        : findMatchingSequences(
+            tokenized[g1], 
+            tokenized[g2], 
+            minLength,
+            verseWordMaps[g1],
+            verseWordMaps[g2]
+          )
       
       const totalMatchingWords = matches.reduce((sum, m) => sum + m.length, 0)
       
@@ -170,13 +304,16 @@ function computeStatistics(gospelsWithVerses, minLength = 3) {
       const pairKey = `${gospelList[0]}-${g}`
       const nextSequences = statistics.pairs[pairKey]?.sequences || []
       
+      const wordsJoin = mode === 'relaxed' 
+        ? (seq) => seq.words.join(' ') 
+        : (seq) => seq.words.join(' ')
+      
       commonSequences = commonSequences.filter(seq1 => 
         nextSequences.some(seq2 => 
-          seq1.words.join(' ') === seq2.words.join(' ')
+          wordsJoin(seq1) === wordsJoin(seq2)
         )
       ).map(seq1 => {
-        // Add verse reference for the current gospel
-        const matchingSeq = nextSequences.find(seq2 => seq1.words.join(' ') === seq2.words.join(' '))
+        const matchingSeq = nextSequences.find(seq2 => wordsJoin(seq1) === wordsJoin(seq2))
         return {
           ...seq1,
           [`verse_${g}`]: matchingSeq ? matchingSeq[`verse${i + 1}`] : null,
@@ -211,14 +348,14 @@ self.onmessage = function(e) {
   try {
     switch (type) {
       case 'COMPUTE_STATISTICS': {
-        const { gospels, minLength = 3 } = payload
-        const stats = computeStatistics(gospels, minLength)
+        const { gospels, minLength = 3, mode = 'exact', similarityThreshold = 0.2 } = payload
+        const stats = computeStatistics(gospels, minLength, mode, similarityThreshold)
         self.postMessage({ type: 'STATISTICS_RESULT', id, payload: stats })
         break
       }
       
       case 'COMPUTE_SECTION_STATISTICS': {
-        const { sections, minLength = 3 } = payload
+        const { sections, minLength = 3, mode = 'exact', similarityThreshold = 0.2 } = payload
         
         const results = sections.map((section) => {
           const gospelsWithVerses = {}
@@ -231,7 +368,7 @@ self.onmessage = function(e) {
             }
           })
           
-          const stats = computeStatistics(gospelsWithVerses, minLength)
+          const stats = computeStatistics(gospelsWithVerses, minLength, mode, similarityThreshold)
           return {
             sectionId: section.id,
             sectionTitle: section.title,
@@ -252,5 +389,5 @@ self.onmessage = function(e) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { computeStatistics, findMatchingSequences, tokenize }
+  module.exports = { computeStatistics, findMatchingSequences, tokenize, levenshteinDistance, areSimilar }
 }
