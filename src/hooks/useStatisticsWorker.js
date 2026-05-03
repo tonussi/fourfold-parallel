@@ -13,7 +13,7 @@ function getWorker() {
     const workerCode = `
       const tokenize = (text) => {
         if (!text) return [];
-        return text.toLowerCase().replace(/[^\\w\\s]/g, ' ').split(/\\s+/).filter(w => w.length > 0);
+        return text.toLowerCase().replace(/[^\\w\\s]/gu, ' ').split(/\\s+/).filter(w => w.length > 0);
       };
       const buildVerseWordMap = (verses) => {
         const result = [], words = [];
