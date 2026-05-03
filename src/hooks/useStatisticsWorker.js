@@ -11,9 +11,10 @@ const pendingRequests = new Map()
 function getWorker() {
   if (!workerInstance) {
     const workerCode = `
+      // Include Greek (α-ωΑ-Ω) + Latin (a-zA-Z) + numbers
       const tokenize = (text) => {
         if (!text) return [];
-        return text.toLowerCase().replace(/[^\\w\\s]/gu, ' ').split(/\\s+/).filter(w => w.length > 0);
+        return text.toLowerCase().replace(/[^α-ωΑ-Ωa-zA-Z0-9\\s]/g, ' ').split(/\\s+/).filter(w => w.length > 0);
       };
       const buildVerseWordMap = (verses) => {
         const result = [], words = [];

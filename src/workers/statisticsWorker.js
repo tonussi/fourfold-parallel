@@ -11,9 +11,10 @@ let token = 0
  */
 function tokenize(text) {
   if (!text) return []
+  // Include Greek (α-ωΑ-Ω) + Latin (a-zA-Z) + numbers in word chars
   return text
     .toLowerCase()
-    .replace(/[^\w\s]/gu, ' ')
+    .replace(/[^α-ωΑ-Ωa-zA-Z0-9\s]/g, ' ')
     .split(/\s+/)
     .filter(word => word.length > 0)
 }
