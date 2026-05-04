@@ -6,7 +6,6 @@ echo "Starting Bible API..."
 cd /bible-api
 npm start &
 
-# Start main application
-echo "Starting Main Application..."
-cd /app
-npm run dev -- --host
+# Start Nginx in the foreground
+echo "Starting Nginx..."
+nginx -g "daemon off;"
