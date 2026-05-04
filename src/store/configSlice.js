@@ -7,6 +7,7 @@ const initialState = {
   currentSectionIndex: 0,
   activeGospelTab: 'matthew',
   selectedFont: 'serif',
+  importedData: null,
 }
 
 const configSlice = createSlice({
@@ -34,6 +35,9 @@ const configSlice = createSlice({
     setSelectedFont: (state, action) => {
       state.selectedFont = action.payload
     },
+    setImportedData: (state, action) => {
+      state.importedData = action.payload
+    },
   },
 })
 
@@ -41,6 +45,7 @@ export const selectCurrentSectionIndex = (state) =>
   state.config.currentSectionIndex
 export const selectActiveGospelTab = (state) => state.config.activeGospelTab
 export const selectSelectedFont = (state) => state.config.selectedFont
+export const selectImportedData = (state) => state.config.importedData
 
 export const {
   setSelectedVersion,
@@ -50,6 +55,7 @@ export const {
   setCurrentSectionIndex,
   setActiveGospelTab,
   setSelectedFont,
+  setImportedData,
 } = configSlice.actions
 
 export default configSlice.reducer

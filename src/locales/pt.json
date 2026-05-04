@@ -8,14 +8,24 @@
     "error": "Erro",
     "success": "Sucesso",
     "search": "Buscar",
-    "settings": "Ajustes",
     "bookmarks": "Salvos",
     "statistics": "Estatísticas",
     "read": "Ler",
     "gospels": "4 Evangelhos",
     "parallel_gospels": "Parallel Gospels",
     "compare_gospels": "Compare Matthew • Mark • Luke • John",
-    "toggle_theme": "Alternar tema"
+    "toggle_theme": "Alternar tema",
+    "settings": "Ajustes",
+    "matthew": "Mateus",
+    "mark": "Marcos",
+    "luke": "Lucas",
+    "john": "João"
+  },
+  "settings": {
+    "danger_zone": "Zona de Perigo",
+    "reset_description": "Isso limpará todos os seus dados da sessão, incluindo favoritos, histórico e configurações personalizadas.",
+    "reset_app": "Resetar Aplicativo",
+    "reset_confirm": "Tem certeza de que deseja resetar o aplicativo? Isso limpará todos os dados da sessão."
   },
   "sidebar": {
     "about_title": "Sobre o Projeto",

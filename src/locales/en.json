@@ -8,14 +8,24 @@
     "error": "Error",
     "success": "Success",
     "search": "Search",
-    "settings": "Settings",
     "bookmarks": "Bookmarks",
     "statistics": "Statistics",
     "read": "Read",
     "gospels": "4 Gospels",
     "parallel_gospels": "Parallel Gospels",
     "compare_gospels": "Compare Matthew • Mark • Luke • John",
-    "toggle_theme": "Toggle theme"
+    "toggle_theme": "Toggle theme",
+    "settings": "Settings",
+    "matthew": "Matthew",
+    "mark": "Mark",
+    "luke": "Luke",
+    "john": "John"
+  },
+  "settings": {
+    "danger_zone": "Danger Zone",
+    "reset_description": "This will clear all your session data, including bookmarks, history, and custom settings.",
+    "reset_app": "Reset App",
+    "reset_confirm": "Are you sure you want to reset the app? This will clear all session data."
   },
   "sidebar": {
     "about_title": "About the Project",

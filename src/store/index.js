@@ -29,6 +29,7 @@ import configReducer, {
   setCurrentSectionIndex,
   setActiveGospelTab,
   setSelectedFont,
+  setImportedData,
 } from './configSlice'
 
 // Redux persist configuration for session storage
@@ -88,6 +89,7 @@ export const selectCurrentSectionIndex = (state) =>
   state.config.currentSectionIndex
 export const selectActiveGospelTab = (state) => state.config.activeGospelTab
 export const selectSelectedFont = (state) => state.config.selectedFont
+export const selectImportedData = (state) => state.config.importedData
 
 // Check if a verse is bookmarked
 export const selectIsBookmarked = (reference, version) => (state) => {
@@ -112,6 +114,7 @@ export {
   setCurrentSectionIndex,
   setActiveGospelTab,
   setSelectedFont,
+  setImportedData,
 }
 
 // Flush persistence (useful for logout)

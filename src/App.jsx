@@ -28,6 +28,9 @@ import {
   setActiveGospelTab,
   selectSelectedFont,
   setSelectedFont,
+  selectImportedData,
+  setImportedData,
+  purgePersistence,
 } from './store'
 import './App.css'
 
@@ -117,7 +120,6 @@ function ParallelReader() {
   const { t } = useTranslation()
   const dispatch = useDispatch()
   const [activeSection, setActiveSection] = useState('read')
-  const [importedData, setImportedData] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
   const [sectionVerses, setSectionVerses] = useState({})
   const [isLoadingVerses, setIsLoadingVerses] = useState(false)
@@ -139,6 +141,7 @@ function ParallelReader() {
   const currentSectionIndex = useSelector(selectCurrentSectionIndex)
   const activeGospelTab = useSelector(selectActiveGospelTab)
   const selectedFont = useSelector(selectSelectedFont)
+  const importedData = useSelector(selectImportedData)
 
   // Update verse font CSS variable when selected font changes
   useEffect(() => {
@@ -179,6 +182,7 @@ function ParallelReader() {
     async (section) => {
       if (!section?.passages) return
       setIsLoadingVerses(true)
+      setSectionVerses({}) // Clear old verses
       const newVerses = {}
 
       try {
@@ -238,12 +242,12 @@ function ParallelReader() {
     [selectedVersion]
   )
 
-  // Initial load
+  // Initial load and reload when data source or section changes
   useEffect(() => {
     if (displaySections && displaySections[currentSectionIndex]) {
       loadVerses(displaySections[currentSectionIndex])
     }
-  }, [currentSectionIndex, loadVerses])
+  }, [currentSectionIndex, loadVerses, displaySections])
 
   useEffect(() => {
     if (activeSection === 'read') {
@@ -306,13 +310,21 @@ function ParallelReader() {
   }
 
   const handleImport = (data) => {
-    setImportedData(data)
+    dispatch(setImportedData(data))
     dispatch(setCurrentSectionIndex(0))
   }
 
   const handleResetToDefault = () => {
-    setImportedData(null)
+    dispatch(setImportedData(null))
     dispatch(setCurrentSectionIndex(0))
+  }
+
+  const handleResetApp = async () => {
+    if (confirm(t('settings.reset_confirm') || 'Are you sure you want to reset the app? This will clear all session data.')) {
+      await purgePersistence()
+      sessionStorage.clear()
+      window.location.reload()
+    }
   }
 
   const handleDownloadExample = (filename) => {
@@ -545,6 +557,22 @@ function ParallelReader() {
                   </button>
                 </div>
               )}
+
+              {/* Danger Zone */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-red-100 dark:border-red-900/20 p-6 shadow-sm">
+                <h3 className="font-bold text-red-600 dark:text-red-400 mb-2">
+                  {t('settings.danger_zone') || 'Danger Zone'}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                  {t('settings.reset_description') || 'This will clear all your session data, including bookmarks, history, and custom settings.'}
+                </p>
+                <button
+                  onClick={handleResetApp}
+                  className="px-6 py-2.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all active:scale-95 shadow-md shadow-red-500/20"
+                >
+                  {t('settings.reset_app') || 'Reset App'}
+                </button>
+              </div>
             </div>
           </div>
         )}
