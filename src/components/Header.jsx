@@ -1,5 +1,6 @@
 import { useTheme } from '../contexts/ThemeContext'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Sun,
   Moon,
@@ -14,13 +15,14 @@ import {
 export default function Header({ activeSection, onSectionChange, sections }) {
   const { isDark, toggleTheme } = useTheme()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const menuItems = [
-    { id: 'read', label: 'Ler', icon: BookOpen },
-    { id: 'statistics', label: 'Estatísticas', icon: BarChart3 },
-    { id: 'search', label: 'Buscar', icon: Search },
-    { id: 'bookmarks', label: 'Salvos', icon: Bookmark },
-    { id: 'settings', label: 'Ajustes', icon: Settings },
+    { id: 'read', label: t('common.read'), icon: BookOpen },
+    { id: 'statistics', label: t('common.statistics'), icon: BarChart3 },
+    { id: 'search', label: t('common.search'), icon: Search },
+    { id: 'bookmarks', label: t('common.bookmarks'), icon: Bookmark },
+    { id: 'settings', label: t('common.settings'), icon: Settings },
   ]
 
   const handleSectionClick = (id) => {
@@ -44,7 +46,7 @@ export default function Header({ activeSection, onSectionChange, sections }) {
                 <BookOpen size={18} strokeWidth={2.5} />
               </div>
               <span className="font-bold text-slate-900 dark:text-white text-sm">
-                4 Evangelhos
+                {t('common.gospels')}
               </span>
             </div>
 
@@ -56,7 +58,7 @@ export default function Header({ activeSection, onSectionChange, sections }) {
                 className="w-9 h-9 flex items-center justify-center rounded-lg
                          text-slate-600 dark:text-slate-400
                          active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
-                aria-label="Alternar tema"
+                aria-label={t('common.toggle_theme')}
               >
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </button>
@@ -72,10 +74,10 @@ export default function Header({ activeSection, onSectionChange, sections }) {
               </div>
               <div>
                 <h1 className="font-bold text-slate-900 dark:text-white">
-                  Parallel Gospels
+                  {t('common.parallel_gospels')}
                 </h1>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Compare Matthew • Mark • Luke • John
+                  {t('common.compare_gospels')}
                 </p>
               </div>
             </div>
@@ -111,7 +113,7 @@ export default function Header({ activeSection, onSectionChange, sections }) {
               className="w-10 h-10 flex items-center justify-center rounded-xl
                        text-slate-600 hover:bg-slate-100
                        dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
-              aria-label="Alternar tema"
+              aria-label={t('common.toggle_theme')}
             >
               {isDark ? <Sun size={20} /> : <Moon size={20} />}
             </button>

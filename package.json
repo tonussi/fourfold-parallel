@@ -18,8 +18,11 @@
     "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.15.2",
     "bible-passage-reference-parser": "^3.2.0",
+    "i18next": "^26.0.8",
+    "i18next-browser-languagedetector": "^8.2.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-i18next": "^17.0.6",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.14.1",
     "redux-persist": "^6.0.0"

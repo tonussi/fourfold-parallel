@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
+import { useTranslation } from 'react-i18next'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { SidebarProvider, useSidebar } from './contexts/SidebarContext'
 import Header from './components/Header'
@@ -31,12 +32,6 @@ import {
 import './App.css'
 
 const GOSPELS = ['matthew', 'mark', 'luke', 'john']
-const GOSPEL_CONFIG = {
-  matthew: { title: 'Mateus', color: 'bg-blue-500' },
-  mark: { title: 'Marcos', color: 'bg-red-500' },
-  luke: { title: 'Lucas', color: 'bg-emerald-500' },
-  john: { title: 'João', color: 'bg-purple-500' },
-}
 
 const EXAMPLES = [
   {
@@ -119,6 +114,7 @@ function getBookDisplayTitle(gospel) {
 }
 
 function ParallelReader() {
+  const { t } = useTranslation()
   const dispatch = useDispatch()
   const [activeSection, setActiveSection] = useState('read')
   const [importedData, setImportedData] = useState(null)
@@ -127,6 +123,16 @@ function ParallelReader() {
   const [isLoadingVerses, setIsLoadingVerses] = useState(false)
   const [highlightedWord, setHighlightedWord] = useState(null)
   const { setSidebarContent, setTitle } = useSidebar()
+
+  const GOSPEL_CONFIG = useMemo(
+    () => ({
+      matthew: { title: t('common.matthew', { defaultValue: 'Matthew' }), color: 'bg-blue-500' },
+      mark: { title: t('common.mark', { defaultValue: 'Mark' }), color: 'bg-red-500' },
+      luke: { title: t('common.luke', { defaultValue: 'Luke' }), color: 'bg-emerald-500' },
+      john: { title: t('common.john', { defaultValue: 'John' }), color: 'bg-purple-500' },
+    }),
+    [t]
+  )
 
   // Redux state
   const selectedVersion = useSelector(selectCurrentVersion)
@@ -165,7 +171,7 @@ function ParallelReader() {
   )
   const displaySections = displayData.sections
   const currentSection = displaySections[currentSectionIndex] || {
-    title: 'Carregando...',
+    title: t('common.loading'),
     id: 'loading',
   }
 
@@ -241,17 +247,17 @@ function ParallelReader() {
 
   useEffect(() => {
     if (activeSection === 'read') {
-      setTitle(currentSection?.title || 'Leitura')
+      setTitle(currentSection?.title || t('common.read'))
       setSidebarContent(
         <div className="space-y-4">
           <SidebarCard
             icon={<BookOpen size={18} />}
-            title="Sessão Atual"
-            description={currentSection?.title || 'Sem título'}
+            title={t('app.current_session')}
+            description={currentSection?.title || t('common.loading')}
           />
           <SidebarCard
             icon={<FileText size={18} />}
-            title="Fonte"
+            title={t('app.source')}
             description={displayData.title}
           />
           <button
@@ -260,28 +266,28 @@ function ParallelReader() {
           >
             <BarChart3 size={18} className="text-indigo-600 dark:text-indigo-400" />
             <div className="text-left">
-              <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">Estatísticas</p>
-              <p className="text-xs text-indigo-500 dark:text-indigo-400">Sequências de palavras</p>
+              <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">{t('common.statistics')}</p>
+              <p className="text-xs text-indigo-500 dark:text-indigo-400">{t('app.word_sequences')}</p>
             </div>
           </button>
         </div>
       )
     } else if (activeSection === 'settings') {
-      setTitle('Configurações')
+      setTitle(t('common.settings'))
       setSidebarContent(
         <div className="space-y-4">
           <SidebarCard
             icon={<Download size={18} />}
-            title="Download de Exemplos"
-            description="Baixe modelos de CSV para criar suas próprias coleções."
+            title={t('app.examples_title')}
+            description={t('app.examples_description')}
           />
         </div>
       )
     } else {
-      setTitle('Menu')
+      setTitle(t('common.read'))
       setSidebarContent(null)
     }
-  }, [activeSection, currentSectionIndex, displayData?.title])
+  }, [activeSection, currentSectionIndex, displayData?.title, t])
 
   const handlePrev = () => {
     if (currentSectionIndex > 0) {
@@ -441,17 +447,17 @@ function ParallelReader() {
           <div className="flex items-center justify-center h-[calc(100vh-220px)] md:h-[calc(100vh-200px)]">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                Busca
+                {t('common.search')}
               </h2>
               <p className="text-slate-500 dark:text-slate-400 mb-4">
-                Busque nos quatro evangelhos simultaneamente
+                {t('app.search_description')}
               </p>
               <a
                 href="/search"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors"
               >
                 <Search className="w-5 h-5" />
-                Abrir Página de Busca
+                {t('app.open_search')}
               </a>
             </div>
           </div>
@@ -461,10 +467,10 @@ function ParallelReader() {
           <div className="flex items-center justify-center h-[calc(100vh-220px)] md:h-[calc(100vh-200px)]">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                Favoritos
+                {t('common.bookmarks')}
               </h2>
               <p className="text-slate-500 dark:text-slate-400">
-                Salve e organize suas passagens favoritas
+                {t('app.bookmarks_description')}
               </p>
             </div>
           </div>
@@ -474,7 +480,7 @@ function ParallelReader() {
           <div className="h-[calc(100vh-220px)] md:h-[calc(100vh-200px)] overflow-y-auto p-4 lg:p-6 mb-16 md:mb-0">
             <div className="max-w-2xl mx-auto space-y-6">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-                Configurações
+                {t('common.settings')}
               </h2>
 
               {/* Example Downloads */}
@@ -484,12 +490,11 @@ function ParallelReader() {
                     <Download size={20} />
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                    Modelos e Exemplos
+                    {t('app.examples_title')}
                   </h3>
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                  Baixe estes exemplos para ver como formatar seus próprios
-                  arquivos CSV para importação.
+                  {t('app.examples_description')}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {EXAMPLES.map((example) => (
@@ -524,10 +529,10 @@ function ParallelReader() {
               {importedData && (
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
                   <h3 className="font-bold text-slate-900 dark:text-white mb-2">
-                    Fonte de Dados Atual
+                    {t('app.current_data_source')}
                   </h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                    Exibindo:{' '}
+                    {t('app.displaying')}:{' '}
                     <span className="font-semibold text-indigo-600 dark:text-indigo-400">
                       {displayData.title}
                     </span>
@@ -536,7 +541,7 @@ function ParallelReader() {
                     onClick={handleResetToDefault}
                     className="px-6 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all active:scale-95"
                   >
-                    Restaurar Padrão
+                    {t('app.restore_default')}
                   </button>
                 </div>
               )}
@@ -554,7 +559,7 @@ function ParallelReader() {
               @TONUSSILABS
             </span>
             <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-            <span>{displaySections?.length} Seções</span>
+            <span>{t('app.sections_count', { count: displaySections?.length })}</span>
           </div>
         </div>
       </footer>

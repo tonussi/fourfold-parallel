@@ -1,49 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import VerseText from './VerseText'
-
-const GOSPEL_CONFIG = {
-  matthew: {
-    title: 'Mateus',
-    subtitle: 'O Rei',
-    color: 'bg-blue-500',
-    borderColor: 'border-t-blue-500',
-    lightBg: 'bg-blue-50',
-    darkBg: 'dark:bg-blue-900/30',
-    textColor: 'text-blue-600',
-    darkTextColor: 'dark:text-blue-400',
-  },
-  mark: {
-    title: 'Marcos',
-    subtitle: 'O Servo',
-    color: 'bg-red-500',
-    borderColor: 'border-t-red-500',
-    lightBg: 'bg-red-50',
-    darkBg: 'dark:bg-red-900/30',
-    textColor: 'text-red-600',
-    darkTextColor: 'dark:text-red-400',
-  },
-  luke: {
-    title: 'Lucas',
-    subtitle: 'O Filho do Homem',
-    color: 'bg-emerald-500',
-    borderColor: 'border-t-emerald-500',
-    lightBg: 'bg-emerald-50',
-    darkBg: 'dark:bg-emerald-900/30',
-    textColor: 'text-emerald-600',
-    darkTextColor: 'dark:text-emerald-400',
-  },
-  john: {
-    title: 'João',
-    subtitle: 'O Filho de Deus',
-    color: 'bg-purple-500',
-    borderColor: 'border-t-purple-500',
-    lightBg: 'bg-purple-50',
-    darkBg: 'dark:bg-purple-900/30',
-    textColor: 'text-purple-600',
-    darkTextColor: 'dark:text-purple-400',
-  },
-}
 
 export default function MobileGospelTabs({
   gospels,
@@ -55,12 +13,56 @@ export default function MobileGospelTabs({
   highlightedWord,
   onWordClick,
 }) {
+  const { t } = useTranslation()
   const [touchStart, setTouchStart] = useState(null)
   const [touchEnd, setTouchEnd] = useState(null)
   const [isSwiping, setIsSwiping] = useState(false)
   const contentRef = useRef(null)
   const currentIndex = gospels.indexOf(activeTab)
   const minSwipeDistance = 50
+
+  const GOSPEL_CONFIG = {
+    matthew: {
+      title: t('common.matthew'),
+      subtitle: t('gospels.matthew_subtitle'),
+      color: 'bg-blue-500',
+      borderColor: 'border-t-blue-500',
+      lightBg: 'bg-blue-50',
+      darkBg: 'dark:bg-blue-900/30',
+      textColor: 'text-blue-600',
+      darkTextColor: 'dark:text-blue-400',
+    },
+    mark: {
+      title: t('common.mark'),
+      subtitle: t('gospels.mark_subtitle'),
+      color: 'bg-red-500',
+      borderColor: 'border-t-red-500',
+      lightBg: 'bg-red-50',
+      darkBg: 'dark:bg-red-900/30',
+      textColor: 'text-red-600',
+      darkTextColor: 'dark:text-red-400',
+    },
+    luke: {
+      title: t('common.luke'),
+      subtitle: t('gospels.luke_subtitle'),
+      color: 'bg-emerald-500',
+      borderColor: 'border-t-emerald-500',
+      lightBg: 'bg-emerald-50',
+      darkBg: 'dark:bg-emerald-900/30',
+      textColor: 'text-emerald-600',
+      darkTextColor: 'dark:text-emerald-400',
+    },
+    john: {
+      title: t('common.john'),
+      subtitle: t('gospels.john_subtitle'),
+      color: 'bg-purple-500',
+      borderColor: 'border-t-purple-500',
+      lightBg: 'bg-purple-50',
+      darkBg: 'dark:bg-purple-900/30',
+      textColor: 'text-purple-600',
+      darkTextColor: 'dark:text-purple-400',
+    },
+  }
 
   // Reset scroll when tab changes
   useEffect(() => {
@@ -141,7 +143,11 @@ export default function MobileGospelTabs({
                 <span
                   className={`
                     text-xs font-bold leading-tight
-                    ${isActive ? gConfig.textColor : 'text-slate-500 dark:text-slate-400'}
+                    ${
+                      isActive
+                        ? gConfig.textColor
+                        : 'text-slate-500 dark:text-slate-400'
+                    }
                     ${isActive ? gConfig.darkTextColor : ''}
                   `}
                 >
@@ -150,7 +156,11 @@ export default function MobileGospelTabs({
                 <span
                   className={`
                   text-[10px] leading-tight mt-0.5
-                  ${isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}
+                  ${
+                    isActive
+                      ? 'text-slate-600 dark:text-slate-300'
+                      : 'text-slate-400 dark:text-slate-500'
+                  }
                 `}
                 >
                   {gConfig.subtitle}
@@ -207,9 +217,11 @@ export default function MobileGospelTabs({
                   disabled={currentIndex === 0}
                   className="p-2 rounded-lg text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50
                            disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  aria-label="Evangelho anterior"
+                  aria-label={t('gospels.prev_gospel')}
                 >
-                  <ChevronLeft size={20} />
+                  <div className="pointer-events-none">
+                    <ChevronLeft size={20} />
+                  </div>
                 </button>
                 <span className="text-xs font-medium text-slate-400 min-w-[40px] text-center">
                   {currentIndex + 1}/4
@@ -219,9 +231,11 @@ export default function MobileGospelTabs({
                   disabled={currentIndex === gospels.length - 1}
                   className="p-2 rounded-lg text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50
                            disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  aria-label="Próximo evangelho"
+                  aria-label={t('gospels.next_gospel')}
                 >
-                  <ChevronRight size={20} />
+                  <div className="pointer-events-none">
+                    <ChevronRight size={20} />
+                  </div>
                 </button>
               </div>
             </div>
@@ -262,10 +276,10 @@ export default function MobileGospelTabs({
                     >
                       {verse.verse}
                     </span>
-                    <VerseText 
-                      text={verse.text} 
-                      highlightedWord={highlightedWord} 
-                      onWordClick={onWordClick} 
+                    <VerseText
+                      text={verse.text}
+                      highlightedWord={highlightedWord}
+                      onWordClick={onWordClick}
                     />
                   </p>
                 ))}
@@ -285,7 +299,7 @@ export default function MobileGospelTabs({
                   </span>
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  Este evento não está registrado em {config.title}
+                  {t('gospels.not_recorded', { title: config.title })}
                 </p>
               </div>
             )}
@@ -294,7 +308,7 @@ export default function MobileGospelTabs({
           {/* Swipe Hint (shows briefly) */}
           <div className="px-4 py-3 text-center">
             <p className="text-[10px] text-slate-400 uppercase tracking-wider">
-              ← Deslize para navegar →
+              {t('gospels.swipe_hint')}
             </p>
           </div>
         </div>

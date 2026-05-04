@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { Search, ArrowLeft, BookOpen, X, Loader2, Info, Search as SearchIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import {
+  Search,
+  ArrowLeft,
+  BookOpen,
+  X,
+  Loader2,
+  Info,
+  Search as SearchIcon,
+} from 'lucide-react'
 import {
   parseReference,
   BOOKS_PROTESTANT,
@@ -13,6 +22,7 @@ import { useSidebar } from '../contexts/SidebarContext'
 import { SidebarCard } from '../components/Sidebar'
 
 export default function SearchPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const [query, setQuery] = useState('')
@@ -29,22 +39,22 @@ export default function SearchPage() {
 
   // Update Sidebar content
   useEffect(() => {
-    setTitle('Busca')
+    setTitle(t('common.search'))
     setSidebarContent(
       <div className="space-y-4">
-        <SidebarCard 
-          icon={<SearchIcon size={18} />} 
-          title="Pesquisa Bíblica"
-          description="Digite uma referência (ex: Mateus 1:1) ou palavras-chave para buscar nos evangelhos."
+        <SidebarCard
+          icon={<SearchIcon size={18} />}
+          title={t('search.sidebar_title')}
+          description={t('search.sidebar_description')}
         />
-        <SidebarCard 
-          icon={<Info size={18} />} 
-          title="Dica de Busca"
-          description="Você pode buscar por capítulos inteiros ou versículos específicos."
+        <SidebarCard
+          icon={<Info size={18} />}
+          title={t('search.tip_title')}
+          description={t('search.tip_description')}
         />
       </div>
     )
-  }, [setSidebarContent, setTitle])
+  }, [setSidebarContent, setTitle, t])
 
   // Search function using @verses library
   const handleSearch = async (searchQuery) => {
@@ -90,12 +100,12 @@ export default function SearchPage() {
             },
           ])
         } else {
-          setError('No verses found for this reference')
+          setError(t('search.no_results', { query: searchQuery }))
           setResults([])
         }
       }
     } catch (err) {
-      setError('Error searching: ' + err.message)
+      setError(t('common.error') + ': ' + err.message)
       setResults([])
     } finally {
       setLoading(false)
@@ -113,7 +123,7 @@ export default function SearchPage() {
 
     for (const verse of verseList) {
       const bookName =
-        verse.bookName || BOOKS_PROTESTANT[verse.book] || 'Desconhecido'
+        verse.bookName || BOOKS_PROTESTANT[verse.book] || t('common.loading')
       const key = `${bookName}-${verse.chapter}`
 
       if (!groups[key]) {
@@ -196,14 +206,14 @@ export default function SearchPage() {
             <button
               onClick={() => navigate('/')}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-              title="Back to Reader"
+              title={t('search.back_to_reader')}
             >
               <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
             </button>
 
             <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <BookOpen className="w-6 h-6 text-indigo-500" />
-              Bible Search
+              {t('search.title')}
             </h1>
           </div>
         </div>
@@ -234,7 +244,7 @@ export default function SearchPage() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search verses (e.g., 'Matthew 1:1' or 'love')..."
+                placeholder={t('search.placeholder')}
                 className="w-full pl-12 pr-10 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 autoFocus
               />
@@ -251,8 +261,9 @@ export default function SearchPage() {
 
           {/* Search Help */}
           <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-            Tip: Enter a reference like "Matthew 1:18-25" or search by keyword.
-            Results are fetched from the {selectedPublisher} Bible version.
+            {t('search.help_tip', { ref: 'Matthew 1:18-25' })}
+            <br />
+            {t('search.results_from', { version: selectedPublisher })}
           </p>
         </div>
 
@@ -262,7 +273,7 @@ export default function SearchPage() {
             <div className="text-center py-12">
               <div className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400">
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Searching...
+                {t('search.searching')}
               </div>
             </div>
           )}
@@ -276,7 +287,7 @@ export default function SearchPage() {
           {!loading && !error && results.length === 0 && query && (
             <div className="text-center py-12">
               <p className="text-slate-500 dark:text-slate-400">
-                No results found for "{query}"
+                {t('search.no_results', { query: query })}
               </p>
             </div>
           )}
@@ -284,7 +295,9 @@ export default function SearchPage() {
           {!loading && !error && results.length > 0 && (
             <div className="space-y-4">
               <p className="text-sm text-slate-500 dark:text-slate-400 px-1">
-                Found {results.length} result{results.length !== 1 ? 's' : ''}
+                {results.length === 1
+                  ? t('search.found_results', { count: results.length })
+                  : t('search.found_results_plural', { count: results.length })}
               </p>
 
               {results.map((result) => (
@@ -308,7 +321,7 @@ export default function SearchPage() {
                         )}
                         {result.type === 'text_match' && (
                           <span className="text-xs px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full">
-                            Text Match
+                            {t('search.text_match')}
                           </span>
                         )}
                       </div>
@@ -342,13 +355,15 @@ export default function SearchPage() {
                         />
                       ) : (
                         <p className="text-slate-500 italic">
-                          No verse text available
+                          {t('search.no_text')}
                         </p>
                       )}
 
                       {result.section && (
                         <p className="mt-3 text-xs text-slate-500 dark:text-slate-500">
-                          From: {result.section}
+                          {t('search.from_section', {
+                            section: result.section,
+                          })}
                         </p>
                       )}
                     </div>
@@ -364,11 +379,10 @@ export default function SearchPage() {
                 <Search className="w-8 h-8 text-slate-400" />
               </div>
               <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-                Start Searching
+                {t('search.start_searching')}
               </h3>
               <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                Enter a Bible reference like "Matthew 1:18-25" or search for
-                keywords across the four Gospels.
+                {t('search.start_description')}
               </p>
 
               {/* Quick Examples */}

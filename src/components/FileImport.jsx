@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Upload,
   FileSpreadsheet,
@@ -11,6 +12,7 @@ import {
 import { fetchVerses } from '../verses'
 
 export default function FileImport({ onImport }) {
+  const { t } = useTranslation()
   const [dragActive, setDragActive] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
@@ -285,7 +287,7 @@ export default function FileImport({ onImport }) {
 
   const processTextInput = async () => {
     if (!textContent.trim()) {
-      setError('Por favor, insira algum conteúdo')
+      setError(t('common.error'))
       return
     }
 
@@ -300,13 +302,11 @@ export default function FileImport({ onImport }) {
       }
       const data = await transformImportData(csvData)
 
-      setSuccess(
-        `Sucesso: "${data.title}" carregado com ${data.sections.length} sessões`
-      )
+      setSuccess(`${t('common.success')}: "${data.title}"`)
       onImport(data)
       closeTextInput()
     } catch (err) {
-      setError(err.message || 'Erro ao processar CSV')
+      setError(err.message || t('import.error_title'))
     } finally {
       setLoading(false)
     }
@@ -318,7 +318,7 @@ export default function FileImport({ onImport }) {
 
     const extension = file.name.split('.').pop().toLowerCase()
     if (extension !== 'csv') {
-      setError('Por favor, envie um arquivo .csv')
+      setError(t('import.error_title'))
       setLoading(false)
       return
     }
@@ -332,12 +332,10 @@ export default function FileImport({ onImport }) {
       }
       const data = await transformImportData(csvData)
 
-      setSuccess(
-        `Sucesso: "${data.title}" carregado com ${data.sections.length} sessões`
-      )
+      setSuccess(`${t('common.success')}: "${data.title}"`)
       onImport(data)
     } catch (err) {
-      setError(err.message || 'Erro ao processar arquivo')
+      setError(err.message || t('import.error_title'))
     } finally {
       setLoading(false)
     }
@@ -366,10 +364,10 @@ export default function FileImport({ onImport }) {
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-slate-900 dark:text-white">
         <Upload size={20} />
-        <h3 className="font-semibold text-lg">Importar Versículos Paralelos</h3>
+        <h3 className="font-semibold text-lg">{t('import.title')}</h3>
       </div>
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Importe seus próprios versículos paralelos usando um arquivo CSV.
+        {t('import.description')}
       </p>
 
       {/* Drag & Drop Zone */}
@@ -395,12 +393,10 @@ export default function FileImport({ onImport }) {
         </div>
         <div className="text-center">
           <p className="text-base font-medium text-slate-700 dark:text-slate-300">
-            {loading
-              ? 'Processando...'
-              : 'Arraste um arquivo CSV ou clique para navegar'}
+            {loading ? t('import.processing') : t('import.drag_drop')}
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">
-            Formato: Title, Matthew, Mark, Luke, John
+            {t('import.format_help')}
           </p>
         </div>
         <input
@@ -420,7 +416,7 @@ export default function FileImport({ onImport }) {
         className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all shadow-sm disabled:opacity-50"
       >
         <Edit3 size={18} />
-        Colar Conteúdo CSV
+        {t('import.paste_csv')}
       </button>
 
       {/* Text Input Modal */}
@@ -429,7 +425,7 @@ export default function FileImport({ onImport }) {
           <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
               <h4 className="font-semibold text-slate-900 dark:text-white">
-                Colar Conteúdo CSV
+                {t('import.paste_csv')}
               </h4>
               <button
                 onClick={closeTextInput}
@@ -455,7 +451,7 @@ export default function FileImport({ onImport }) {
                 disabled={loading}
                 className="px-5 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
               >
-                Cancelar
+                {t('import.cancel')}
               </button>
               <button
                 onClick={processTextInput}
@@ -463,7 +459,7 @@ export default function FileImport({ onImport }) {
                 className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 disabled:opacity-50"
               >
                 {loading && <Loader2 size={18} className="animate-spin" />}
-                Importar CSV
+                {t('import.import_button')}
               </button>
             </div>
           </div>
@@ -475,7 +471,7 @@ export default function FileImport({ onImport }) {
         <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-300 animate-in fade-in slide-in-from-top-2">
           <AlertCircle size={20} className="mt-0.5 shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-semibold">Falha na importação</p>
+            <p className="text-sm font-semibold">{t('import.error_title')}</p>
             <p className="text-xs mt-1 opacity-90 leading-relaxed">{error}</p>
           </div>
           <button
@@ -491,7 +487,7 @@ export default function FileImport({ onImport }) {
         <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-300 animate-in fade-in slide-in-from-top-2">
           <Check size={20} className="mt-0.5 shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-semibold">Importação concluída</p>
+            <p className="text-sm font-semibold">{t('import.success_title')}</p>
             <p className="text-xs mt-1 opacity-90 leading-relaxed">{success}</p>
           </div>
           <button
@@ -506,7 +502,7 @@ export default function FileImport({ onImport }) {
       {/* File Format Help */}
       <div className="border-t border-slate-200 dark:border-slate-800 pt-5">
         <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-3 uppercase tracking-wider">
-          Formato de Arquivo Esperado:
+          {t('import.expected_format')}
         </p>
         <div className="text-xs text-slate-500 dark:text-slate-500">
           <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 font-mono leading-relaxed">
@@ -516,10 +512,7 @@ export default function FileImport({ onImport }) {
             <br />
             Tentações,4:1-11,,4:1-13,
           </div>
-          <p className="mt-3 leading-relaxed">
-            * Use ponto e vírgula (;) ou novas linhas para separar múltiplos
-            intervalos de versículos em uma mesma célula.
-          </p>
+          <p className="mt-3 leading-relaxed">{t('import.format_note')}</p>
         </div>
       </div>
     </div>

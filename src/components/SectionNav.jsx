@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, List, Type } from 'lucide-react'
 
 const FONTS = [
@@ -20,7 +21,11 @@ export default function SectionNav({
   selectedFont,
   onFontChange,
 }) {
-  const currentSection = sections[currentIndex] || { title: 'Carregando...', id: 'loading' }
+  const { t } = useTranslation()
+  const currentSection = sections[currentIndex] || {
+    title: t('common.loading'),
+    id: 'loading',
+  }
 
   return (
     <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
@@ -36,7 +41,7 @@ export default function SectionNav({
                      text-slate-700 dark:text-slate-300
                      disabled:opacity-30 disabled:cursor-not-allowed
                      active:scale-95 transition-all"
-            aria-label="Seção anterior"
+            aria-label={t('nav.previous')}
           >
             <ChevronLeft size={20} />
           </button>
@@ -44,7 +49,7 @@ export default function SectionNav({
           {/* Section Title Display */}
           <div className="flex-1 text-center">
             <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-0.5">
-              Passagem
+              {t('nav.passage')}
             </p>
             <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate px-2">
               {currentIndex + 1}. {currentSection.title}
@@ -62,7 +67,7 @@ export default function SectionNav({
                          text-slate-900 dark:text-white 
                          pl-2 pr-1 py-2 rounded-lg text-[10px] font-bold 
                          focus:outline-none border-none cursor-pointer w-8"
-                aria-label="Selecionar fonte"
+                aria-label={t('nav.font')}
               >
                 {FONTS.map((font) => (
                   <option key={font.id} value={font.id}>
@@ -103,7 +108,7 @@ export default function SectionNav({
                      text-slate-700 dark:text-slate-300
                      disabled:opacity-30 disabled:cursor-not-allowed
                      active:scale-95 transition-all"
-            aria-label="Próxima seção"
+            aria-label={t('nav.next')}
           >
             <ChevronRight size={20} />
           </button>
@@ -120,7 +125,7 @@ export default function SectionNav({
                   ? 'w-6 bg-indigo-600 dark:bg-indigo-400'
                   : 'w-1.5 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
               }`}
-              aria-label={`Ir para seção ${index + 1}`}
+              aria-label={t('nav.go_to_section', { index: index + 1 })}
             />
           ))}
         </div>
@@ -138,7 +143,7 @@ export default function SectionNav({
                        dark:text-slate-400 dark:hover:bg-slate-800
                        disabled:opacity-30 disabled:cursor-not-allowed
                        transition-colors"
-              aria-label="Previous section"
+              aria-label={t('nav.previous')}
             >
               <ChevronLeft size={24} />
             </button>
@@ -175,7 +180,7 @@ export default function SectionNav({
                        dark:text-slate-400 dark:hover:bg-slate-800
                        disabled:opacity-30 disabled:cursor-not-allowed
                        transition-colors"
-              aria-label="Next section"
+              aria-label={t('nav.next')}
             >
               <ChevronRight size={24} />
             </button>
@@ -184,7 +189,7 @@ export default function SectionNav({
               {/* Font Selector (Desktop) */}
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
-                  Fonte
+                  {t('nav.font')}
                 </span>
                 <div className="relative">
                   <select
@@ -211,7 +216,7 @@ export default function SectionNav({
               {/* Version Selector (Desktop) */}
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
-                  Versão
+                  {t('nav.version')}
                 </span>
                 <select
                   value={selectedVersion}

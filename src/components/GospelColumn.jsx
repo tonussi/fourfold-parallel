@@ -1,42 +1,51 @@
+import { useTranslation } from 'react-i18next'
 import { ScrollText, BookOpen, Bookmark, Share2 } from 'lucide-react'
 import VerseText from './VerseText'
 
-const gospelConfig = {
-  matthew: {
-    title: 'Matthew',
-    subtitle: 'The King',
-    color: 'border-t-4 border-t-blue-500',
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
-    iconBg: 'bg-blue-100 dark:bg-blue-900/50',
-    iconColor: 'text-blue-600 dark:text-blue-400',
-  },
-  mark: {
-    title: 'Mark',
-    subtitle: 'The Servant',
-    color: 'border-t-4 border-t-red-500',
-    bg: 'bg-red-50 dark:bg-red-950/30',
-    iconBg: 'bg-red-100 dark:bg-red-900/50',
-    iconColor: 'text-red-600 dark:text-red-400',
-  },
-  luke: {
-    title: 'Luke',
-    subtitle: 'The Son of Man',
-    color: 'border-t-4 border-t-emerald-500',
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
-    iconBg: 'bg-emerald-100 dark:bg-emerald-900/50',
-    iconColor: 'text-emerald-600 dark:text-emerald-400',
-  },
-  john: {
-    title: 'John',
-    subtitle: 'The Son of God',
-    color: 'border-t-4 border-t-purple-500',
-    bg: 'bg-purple-50 dark:bg-purple-950/30',
-    iconBg: 'bg-purple-100 dark:bg-purple-900/50',
-    iconColor: 'text-purple-600 dark:text-purple-400',
-  },
-}
+export default function GospelColumn({
+  gospel,
+  reference,
+  verses,
+  highlightedWord,
+  onWordClick,
+}) {
+  const { t } = useTranslation()
 
-export default function GospelColumn({ gospel, reference, verses, highlightedWord, onWordClick }) {
+  const gospelConfig = {
+    matthew: {
+      title: t('common.matthew'),
+      subtitle: t('gospels.matthew_subtitle'),
+      color: 'border-t-4 border-t-blue-500',
+      bg: 'bg-blue-50 dark:bg-blue-950/30',
+      iconBg: 'bg-blue-100 dark:bg-blue-900/50',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+    },
+    mark: {
+      title: t('common.mark'),
+      subtitle: t('gospels.mark_subtitle'),
+      color: 'border-t-4 border-t-red-500',
+      bg: 'bg-red-50 dark:bg-red-950/30',
+      iconBg: 'bg-red-100 dark:bg-red-900/50',
+      iconColor: 'text-red-600 dark:text-red-400',
+    },
+    luke: {
+      title: t('common.luke'),
+      subtitle: t('gospels.luke_subtitle'),
+      color: 'border-t-4 border-t-emerald-500',
+      bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+      iconBg: 'bg-emerald-100 dark:bg-emerald-900/50',
+      iconColor: 'text-emerald-600 dark:text-emerald-400',
+    },
+    john: {
+      title: t('common.john'),
+      subtitle: t('gospels.john_subtitle'),
+      color: 'border-t-4 border-t-purple-500',
+      bg: 'bg-purple-50 dark:bg-purple-950/30',
+      iconBg: 'bg-purple-100 dark:bg-purple-900/50',
+      iconColor: 'text-purple-600 dark:text-purple-400',
+    },
+  }
+
   const config = gospelConfig[gospel]
 
   return (
@@ -86,7 +95,7 @@ export default function GospelColumn({ gospel, reference, verses, highlightedWor
           </div>
         ) : (
           <span className="text-sm text-slate-400 italic">
-            No parallel passage
+            {t('gospels.no_parallel')}
           </span>
         )}
       </div>
@@ -100,16 +109,20 @@ export default function GospelColumn({ gospel, reference, verses, highlightedWor
                 key={verse.verse}
                 className={`
                   verse-text text-[14px] sm:text-[15px] leading-[1.7] sm:leading-[1.8]
-                  ${index > 0 ? 'pt-3 border-t border-slate-100 dark:border-slate-800/50' : ''}
+                  ${
+                    index > 0
+                      ? 'pt-3 border-t border-slate-100 dark:border-slate-800/50'
+                      : ''
+                  }
                 `}
               >
                 <sup className={`font-bold mr-1 text-xs ${config.iconColor}`}>
                   {verse.verse}
                 </sup>
-                <VerseText 
-                  text={verse.text} 
-                  highlightedWord={highlightedWord} 
-                  onWordClick={onWordClick} 
+                <VerseText
+                  text={verse.text}
+                  highlightedWord={highlightedWord}
+                  onWordClick={onWordClick}
                 />
               </p>
             ))}
@@ -120,7 +133,7 @@ export default function GospelColumn({ gospel, reference, verses, highlightedWor
               <ScrollText className={config.iconColor} size={32} />
             </div>
             <p className="text-slate-500 dark:text-slate-400 text-sm">
-              This event is not recorded in {config.title}
+              {t('gospels.not_recorded', { title: config.title })}
             </p>
           </div>
         )}
