@@ -19,6 +19,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    allowedHosts: ['fourfold-parallel-428654190711.europe-west1.run.app'],
   },
   test: {
     globals: true,
