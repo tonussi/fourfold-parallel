@@ -1,3 +1,11 @@
+# Back
+
+Optional
+
+`git clone https://github.com/undergroundchurch/bible-api`
+
+# Front
+
 ```bash
 npm install
 npm run dev
