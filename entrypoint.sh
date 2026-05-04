@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
-# Run this project (bible-api now runs as its own Docker Compose service)
+# Start Bible API in the background
+echo "Starting Bible API..."
+cd /bible-api
+npm start &
+
+# Start main application
+echo "Starting Main Application..."
 cd /app
 npm run dev -- --host
