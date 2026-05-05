@@ -9,7 +9,7 @@ import {
   Edit3,
   Loader2,
 } from 'lucide-react'
-import { fetchVerses } from '../verses'
+import { fetchVerses } from '@src/verses'
 
 export default function FileImport({ onImport }) {
   const { t } = useTranslation()

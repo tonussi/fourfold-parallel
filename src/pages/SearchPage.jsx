@@ -16,10 +16,10 @@ import {
   BOOKS_PROTESTANT,
   BibleVersionEnum,
   fetchVerses,
-} from '../verses'
-import { selectCurrentVersion, setSelectedVersion } from '../store'
-import { useSidebar } from '../contexts/SidebarContext'
-import { SidebarCard } from '../components/Sidebar'
+} from '@src/verses'
+import { selectCurrentVersion, setSelectedVersion } from '@src/store'
+import { useSidebar } from '@src/contexts/SidebarContext'
+import { SidebarCard } from '@src/components/Sidebar'
 
 export default function SearchPage() {
   const { t } = useTranslation()

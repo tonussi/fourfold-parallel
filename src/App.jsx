@@ -1,24 +1,24 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import { ThemeProvider } from './contexts/ThemeContext'
-import { SidebarProvider, useSidebar } from './contexts/SidebarContext'
-import Header from './components/Header'
-import SectionNav from './components/SectionNav'
-import GospelColumn from './components/GospelColumn'
-import MobileGospelTabs from './components/MobileGospelTabs'
-import FileImport from './components/FileImport'
-import Sidebar, { SidebarCard } from './components/Sidebar'
-import StatisticsPage from './pages/StatisticsPage'
+import { ThemeProvider } from '@src/contexts/ThemeContext'
+import { SidebarProvider, useSidebar } from '@src/contexts/SidebarContext'
+import Header from '@src/components/Header'
+import SectionNav from '@src/components/SectionNav'
+import GospelColumn from '@src/components/GospelColumn'
+import MobileGospelTabs from '@src/components/MobileGospelTabs'
+import FileImport from '@src/components/FileImport'
+import Sidebar, { SidebarCard } from '@src/components/Sidebar'
+import StatisticsPage from '@src/pages/StatisticsPage'
 import {
   parseReference,
   LABELS,
   BOOKS_PROTESTANT,
   BibleVersionEnum,
   fetchVerses,
-} from './verses'
+} from '@src/verses'
 import { Search, Download, BookOpen, FileText, BarChart3 } from 'lucide-react'
-import parallelData from './data/parallelVerses.json'
+import parallelData from '@src/data/parallelVerses.json'
 import {
   selectCurrentVersion,
   selectCurrentSectionIndex,
@@ -31,7 +31,7 @@ import {
   selectImportedData,
   setImportedData,
   purgePersistence,
-} from './store'
+} from '@src/store'
 import './App.css'
 
 const GOSPELS = ['matthew', 'mark', 'luke', 'john']
