@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { fetchVerses } from '../verses'
+import { fetchVerses } from '@src/verses'
 
 // Async thunks for API calls
 export const fetchVerseContent = createAsyncThunk(

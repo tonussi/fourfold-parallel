@@ -3,11 +3,11 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import './i18n'
-import App from './App.jsx'
-import SearchPage from './pages/SearchPage.jsx'
-import StoreProvider from './store/StoreProvider'
-import { ThemeProvider } from './contexts/ThemeContext'
-import Layout from './components/Layout'
+import App from '@src/App.jsx'
+import SearchPage from '@src/pages/SearchPage.jsx'
+import StoreProvider from '@src/store/StoreProvider'
+import { ThemeProvider } from '@src/contexts/ThemeContext'
+import Layout from '@src/components/Layout'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

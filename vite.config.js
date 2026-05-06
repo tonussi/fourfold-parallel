@@ -3,13 +3,15 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
+import dotenv from 'dotenv'
+dotenv.config()
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+const ALLOWED_HOST = process.env.ALLOWED_HOST
+console.log(`ALLOWED_HOST: ${ALLOWED_HOST}`)
 
-console.log(__dirname)
-
-// https://vite.dev/config/
-export default defineConfig({
+const config = {
   plugins: [react()],
   resolve: {
     alias: {
@@ -18,7 +20,13 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true,
+    proxy: {
+      '/api/process': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   test: {
     globals: true,
@@ -30,4 +38,11 @@ export default defineConfig({
       exclude: ['node_modules/', 'src/**/*.test.js'],
     },
   },
-})
+}
+
+if (ALLOWED_HOST) {
+  config.server.allowedHosts = [ALLOWED_HOST]
+}
+
+// https://vite.dev/config/
+export default defineConfig(config)
