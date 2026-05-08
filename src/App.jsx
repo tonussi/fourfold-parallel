@@ -45,6 +45,7 @@ const EXAMPLES = [
   { name: 'Bart Ehrman - Q', file: 'BartEhrman-Q.csv', type: 'CSV' },
   { name: 'A Theology of Q', file: 'ATheologyOfQ-Q.csv', type: 'CSV' },
   { name: 'Research Notes', file: 'Q-Researchers.md', type: 'MD' },
+  { name: 'CJ Cornthwaite', file: 'CJCornthwaite.csv', type: 'CSV' },
 ]
 
 const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
@@ -128,10 +129,22 @@ function ParallelReader() {
 
   const GOSPEL_CONFIG = useMemo(
     () => ({
-      matthew: { title: t('common.matthew', { defaultValue: 'Matthew' }), color: 'bg-blue-500' },
-      mark: { title: t('common.mark', { defaultValue: 'Mark' }), color: 'bg-red-500' },
-      luke: { title: t('common.luke', { defaultValue: 'Luke' }), color: 'bg-emerald-500' },
-      john: { title: t('common.john', { defaultValue: 'John' }), color: 'bg-purple-500' },
+      matthew: {
+        title: t('common.matthew', { defaultValue: 'Matthew' }),
+        color: 'bg-blue-500',
+      },
+      mark: {
+        title: t('common.mark', { defaultValue: 'Mark' }),
+        color: 'bg-red-500',
+      },
+      luke: {
+        title: t('common.luke', { defaultValue: 'Luke' }),
+        color: 'bg-emerald-500',
+      },
+      john: {
+        title: t('common.john', { defaultValue: 'John' }),
+        color: 'bg-purple-500',
+      },
     }),
     [t]
   )
@@ -268,10 +281,17 @@ function ParallelReader() {
             onClick={() => setActiveSection('statistics')}
             className="w-full mt-4 flex items-center gap-3 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
           >
-            <BarChart3 size={18} className="text-indigo-600 dark:text-indigo-400" />
+            <BarChart3
+              size={18}
+              className="text-indigo-600 dark:text-indigo-400"
+            />
             <div className="text-left">
-              <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">{t('common.statistics')}</p>
-              <p className="text-xs text-indigo-500 dark:text-indigo-400">{t('app.word_sequences')}</p>
+              <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                {t('common.statistics')}
+              </p>
+              <p className="text-xs text-indigo-500 dark:text-indigo-400">
+                {t('app.word_sequences')}
+              </p>
             </div>
           </button>
         </div>
@@ -320,7 +340,12 @@ function ParallelReader() {
   }
 
   const handleResetApp = async () => {
-    if (confirm(t('settings.reset_confirm') || 'Are you sure you want to reset the app? This will clear all session data.')) {
+    if (
+      confirm(
+        t('settings.reset_confirm') ||
+          'Are you sure you want to reset the app? This will clear all session data.'
+      )
+    ) {
       await purgePersistence()
       sessionStorage.clear()
       window.location.reload()
@@ -378,14 +403,13 @@ function ParallelReader() {
     if (!currentSection?.passages) return currentSection
     return {
       ...currentSection,
-      passages: currentSection.passages.map(passage => ({
+      passages: currentSection.passages.map((passage) => ({
         ...passage,
         verses: sectionVerses[passage.gospel] || passage.verses || [],
       })),
     }
   }, [currentSection, sectionVerses])
 
-  
   return (
     <>
       <Header
@@ -564,7 +588,8 @@ function ParallelReader() {
                   {t('settings.danger_zone') || 'Danger Zone'}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                  {t('settings.reset_description') || 'This will clear all your session data, including bookmarks, history, and custom settings.'}
+                  {t('settings.reset_description') ||
+                    'This will clear all your session data, including bookmarks, history, and custom settings.'}
                 </p>
                 <button
                   onClick={handleResetApp}
@@ -587,7 +612,9 @@ function ParallelReader() {
               @TONUSSILABS
             </span>
             <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-            <span>{t('app.sections_count', { count: displaySections?.length })}</span>
+            <span>
+              {t('app.sections_count', { count: displaySections?.length })}
+            </span>
           </div>
         </div>
       </footer>
