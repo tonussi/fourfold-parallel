@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y git nginx gettext-base && rm -rf /var/l
 # Setup Bible API
 WORKDIR /bible-api
 RUN git clone https://github.com/undergroundchurch/bible-api.git .
-RUN npm ci
+RUN npm install
 
 # Setup Nginx to serve the build
 WORKDIR /app
@@ -25,15 +25,16 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/sites-available/default.template
 
 # Environment variables for Bible API
-ENV REDIS_HOST=redis
+ENV REDIS_HOST=localhost
 ENV REDIS_PORT=6379
+# If a real Redis is available, override REDIS_HOST via docker run -e
 
 # Expose ports (Cloud Run uses PORT env, but we list them for clarity)
 EXPOSE 8080
 EXPOSE 3001
 
 # Copy and setup entrypoint
-COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh
+COPY entrypoint.prod.sh .
+RUN chmod +x entrypoint.prod.sh
 
 CMD ["./entrypoint.prod.sh"]
