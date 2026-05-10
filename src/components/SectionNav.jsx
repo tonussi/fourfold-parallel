@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, List, Type } from 'lucide-react'
 
 const FONTS = [
-  { id: 'serif', name: 'Serif' },
-  { id: 'sans', name: 'Sans' },
   { id: 'dejavu', name: 'DejaVu' },
   { id: 'koine', name: 'Koine' },
+  { id: 'sans', name: 'Sans' },
+  { id: 'serif', name: 'Serif' },
 ]
 
 export default function SectionNav({
