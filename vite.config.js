@@ -22,7 +22,8 @@ const config = {
     port: 3000,
     proxy: {
       '/process': {
-        target: process.env.BIBLE_API_INTERNAL_URL || 'http://bible-api:3001',
+        target:
+          process.env.VITE_BIBLE_API_INTERNAL_URL || 'http://bible-api-1:3001',
         changeOrigin: true,
         secure: false,
       },
