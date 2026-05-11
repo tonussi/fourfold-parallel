@@ -46,6 +46,11 @@ const EXAMPLES = [
   { name: 'A Theology of Q', file: 'ATheologyOfQ-Q.csv', type: 'CSV' },
   { name: 'Research Notes', file: 'Q-Researchers.md', type: 'MD' },
   { name: 'CJ Cornthwaite', file: 'CJCornthwaite.csv', type: 'CSV' },
+  {
+    name: 'Parallel Reading (Full - Beta Version)',
+    file: 'ParallelReading-Full-BetaVersion.csv',
+    type: 'CSV',
+  },
 ]
 
 const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
