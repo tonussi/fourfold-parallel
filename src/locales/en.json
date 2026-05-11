@@ -112,7 +112,9 @@
     "total_sequences": "Total Sequences",
     "words_in_q": "Words in Q",
     "active_verses": "Active Verses",
-    "loading_stats": "Loading statistics..."
+    "loading_stats": "Loading statistics...",
+    "translation": "Translation:",
+    "compare_translation": "Compare with translation"
   },
   "gospels": {
     "matthew_subtitle": "The King",
@@ -124,6 +126,11 @@
     "prev_gospel": "Previous gospel",
     "next_gospel": "Next gospel",
     "swipe_hint": "← Swipe to navigate →",
+    "compare_gospels": "Compare {{gospel1}} × {{gospel2}}",
+    "matthew": "Matthew",
+    "mark": "Mark",
+    "luke": "Luke",
+    "john": "John",
     "abbrev": {
       "matthew": "Mt",
       "mark": "Mk",

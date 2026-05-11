@@ -12,7 +12,12 @@ import {
   ArrowLeft,
   BookOpen,
   RefreshCw,
+  ChevronDown,
+  Languages,
+  ArrowRight
 } from 'lucide-react'
+import { BibleVersionEnum } from '../verses'
+import api from '../services/api'
 
 function StatCard({ icon: Icon, label, value, subValue, color = 'indigo' }) {
   const colorClasses = {
@@ -74,7 +79,7 @@ function PairComparison({ stats, selectedPair, onSelectPair }) {
           >
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {t(`gospels.pairs.${key}`)}
+                {t(`gospels.${key}`)}
               </span>
               <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                 {data.count}
@@ -96,7 +101,13 @@ function PairComparison({ stats, selectedPair, onSelectPair }) {
   )
 }
 
-function SequencesList({ sequences, pair, showReferences = true }) {
+function SequencesList({
+  sequences,
+  pair,
+  translationVerses = {},
+  comparedVerses = {},
+  translationVersion,
+}) {
   const { t } = useTranslation()
   if (!sequences || sequences.length === 0)
     return (
@@ -108,97 +119,90 @@ function SequencesList({ sequences, pair, showReferences = true }) {
 
   const [g1, g2] = pair.split('-')
   const sorted = [...sequences].sort((a, b) => b.length - a.length)
-  const top = sorted.slice(0, 100)
+  const top = sorted.slice(0, 50)
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
           <Trophy size={16} />
-          {showReferences
-            ? t('stats.common_sequences')
-            : t('stats.longest_sequences')}{' '}
-          ({sequences.length})
+          {t('stats.common_sequences')} ({sequences.length})
         </h4>
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {t('stats.sort_by_length')}
-        </span>
       </div>
 
-      <div className="space-y-1.5 max-h-[calc(100vh-400px)] overflow-y-auto pr-2">
+      <div className="grid grid-cols-1 gap-4">
         {top.map((seq, idx) => {
           const formatted = formatSequenceWithReference(seq, g1, g2)
-          const refs = formatted.references
+          
+          // Look up full texts
+          const text1 = comparedVerses[g1]?.find(v => v.verse === seq.verse1)?.scripture || ''
+          const text2 = comparedVerses[g2]?.find(v => v.verse === seq.verse2)?.scripture || ''
+          const trans = translationVerses[g1]?.find(v => v.verse === seq.verse1)?.scripture || ''
 
           return (
             <div
               key={idx}
-              className="flex items-start gap-3 p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700"
+              className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm"
             >
-              <span className="text-xs font-bold text-indigo-500 dark:text-indigo-400 min-w-[36px] text-right pt-0.5">
-                {seq.length}w
-              </span>
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-50 dark:border-slate-800">
+                 <span className="text-xs font-bold text-indigo-500 px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30">
+                    {seq.length}w
+                 </span>
+                 <p className="verse-font text-sm font-medium text-slate-600 dark:text-slate-400 italic">
+                   "{formatted.words}"
+                 </p>
+                 {seq.similarity && (
+                   <span className="ml-auto text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
+                     {seq.similarity}%
+                   </span>
+                 )}
+              </div>
 
-              <div className="flex-1 min-w-0">
-                <p className="verse-font text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">
-                  "{formatted.words}"
-                </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Column 1: Side A */}
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    {t(`gospels.${g1}`)} {formatted.references[g1]}
+                  </span>
+                  <p className="verse-font text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                    {text1}
+                  </p>
+                </div>
 
-                {showReferences && (
-                  <div className="flex items-center gap-3 mt-2 text-xs">
-                    <span
-                      className={`px-2 py-0.5 rounded font-medium ${
-                        g1 === 'matthew'
-                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                          : g1 === 'mark'
-                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                          : g1 === 'luke'
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                          : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                      }`}
-                    >
-                      {refs[g1]}
-                    </span>
-                    <span className="text-slate-300 dark:text-slate-600">↔</span>
-                    <span
-                      className={`px-2 py-0.5 rounded font-medium ${
-                        g2 === 'matthew'
-                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                          : g2 === 'mark'
-                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                          : g2 === 'luke'
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                          : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                      }`}
-                    >
-                      {refs[g2]}
-                    </span>
-                    {formatted.similarity && (
-                      <span className="ml-auto text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded border border-amber-100 dark:border-amber-800/50">
-                        {formatted.similarity}% {t('stats.similar')}
-                      </span>
-                    )}
-                  </div>
-                )}
+                {/* Column 2: Side B */}
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    {t(`gospels.${g2}`)} {formatted.references[g2]}
+                  </span>
+                  <p className="verse-font text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                    {text2}
+                  </p>
+                </div>
+
+                {/* Column 3: Translation */}
+                <div className="space-y-2 border-l border-slate-100 dark:border-slate-800 pl-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">
+                    {translationVersion || t('stats.translation')}
+                  </span>
+                  <p className="verse-font text-sm text-slate-500 dark:text-slate-400 italic leading-relaxed">
+                    {trans || '—'}
+                  </p>
+                </div>
               </div>
             </div>
           )
         })}
       </div>
-
-      {sequences.length > 100 && (
-        <p className="text-xs text-slate-500 dark:text-slate-400 text-center pt-2">
-          {t('stats.showing_count', {
-            count: 100,
-            total: sequences.length,
-          })}
-        </p>
-      )}
     </div>
   )
 }
 
-function AllGospelsCommonSequences({ stats }) {
+function AllGospelsCommonSequences({
+  stats,
+  comparedVerses = {},
+  translationVerses = {},
+  translationVersion,
+}) {
   const { t } = useTranslation()
   const common = stats?.summary?.uniqueSequences || []
 
@@ -212,57 +216,65 @@ function AllGospelsCommonSequences({ stats }) {
     )
 
   const sorted = [...common].sort((a, b) => b.length - a.length)
-  const top = sorted.slice(0, 50)
+  const top = sorted.slice(0, 20)
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <h4 className="text-sm font-semibold text-violet-700 dark:text-violet-300 flex items-center gap-2">
         <BookOpen size={16} />
         {t('stats.all_gospels_sequences')} ({common.length})
-        <span className="text-xs font-normal text-violet-500 dark:text-violet-400 ml-2">
-          {t('stats.q_source')}
-        </span>
       </h4>
 
-      <div className="space-y-1.5 max-h-64 overflow-y-auto pr-2">
-        {top.map((seq, idx) => (
-          <div
-            key={idx}
-            className="flex items-start gap-3 p-3 rounded-xl bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-800/50"
-          >
-            <span className="text-xs font-bold text-violet-500 dark:text-violet-400 min-w-[36px] text-right pt-0.5">
-              {seq.length}w
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="verse-font text-sm text-violet-700 dark:text-violet-300 italic">
-                "{seq.words.join(' ')}"
-              </p>
-              <div className="flex items-center gap-2 mt-2 text-xs flex-wrap">
-                {['matthew', 'mark', 'luke', 'john'].map((g) => (
-                  <span
-                    key={g}
-                    className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                      g === 'matthew'
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                        : g === 'mark'
-                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                        : g === 'luke'
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                        : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                    }`}
-                  >
-                    {t(`gospels.abbrev.${g}`)}{' '}
-                    {seq[`verse_${g}`] ||
-                      seq[
-                        `verse${g.charAt(0).toUpperCase() + g.slice(1)}`
-                      ] ||
-                      '?'}
-                  </span>
-                ))}
+      <div className="space-y-6">
+        {top.map((seq, idx) => {
+          const formatted = formatSequenceWithReference(seq)
+          return (
+            <div
+              key={idx}
+              className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-violet-100 dark:border-violet-900/30 shadow-sm"
+            >
+              <div className="flex items-center gap-3 mb-4 pb-3 border-b border-violet-50 dark:border-violet-900/20">
+                <div className="px-2 py-1 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 text-xs font-bold">
+                  {seq.length} words
+                </div>
+                <p className="verse-font text-lg font-medium text-violet-800 dark:text-violet-200 italic">
+                  "{formatted.words}"
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                {['matthew', 'mark', 'luke', 'john'].map((g) => {
+                  const fullText = comparedVerses[g]?.find(v => v.verse === seq[`verse_${g}`])?.scripture
+                  const translation = translationVerses[g]?.find(v => v.verse === seq[`verse_${g}`])?.scripture
+                  if (!fullText) return null
+
+                  return (
+                    <div key={g} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                       <div className="space-y-1">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                            g === 'matthew' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30' :
+                            g === 'mark' ? 'bg-red-100 text-red-700 dark:bg-red-900/30' :
+                            g === 'luke' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30' :
+                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30'
+                          }`}>
+                            {t(`gospels.${g}`)} {formatted.references[g]}
+                          </span>
+                       </div>
+                       <p className="verse-font text-sm text-slate-700 dark:text-slate-200 leading-relaxed md:col-span-1">
+                          {fullText}
+                       </p>
+                       <div className="md:border-l md:border-slate-100 md:dark:border-slate-800 md:pl-6">
+                          <p className="verse-font text-sm text-slate-500 dark:text-slate-400 italic leading-relaxed">
+                            {translation || '—'}
+                          </p>
+                       </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -275,12 +287,87 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
   const [selectedPair, setSelectedPair] = useState('matthew-luke')
 
   // Compute statistics when section, minLength or mode changes
-  const { results, isLoading, error, computeSectionStats } =
-    useStatisticsWorker({
-      minLength,
-      mode,
-      deps: [currentSection, minLength, mode],
+  const [translationVerses, setTranslationVerses] = useState({})
+  const [comparedVerses, setComparedVerses] = useState({})
+
+  // Compute statistics when section, minLength or mode changes
+  const {
+    results,
+    isLoading,
+    error,
+    computeSectionStats,
+    setTranslationVersion,
+    translationVersion,
+  } = useStatisticsWorker({
+    minLength,
+    mode,
+    translationVersion: 'ACF', // Default translation
+    deps: [currentSection, minLength, mode],
+  })
+
+  // Fetch translation verses and compared verses on-demand
+  useEffect(() => {
+    if (!currentSection) return
+
+    // Organize compared verses from currentSection
+    const compared = {}
+    currentSection.passages?.forEach(p => {
+      compared[p.gospel] = p.verses || []
     })
+    setComparedVerses(compared)
+
+    // Fetch translation verses if version is selected
+    if (translationVersion) {
+      const querySegments = currentSection.passages?.map(p => {
+        // Reconstruct segment from passage reference
+        // Handle "Matthew 1:1" or "Matthew 1:1-8" or "1 John 1:1"
+        const match = p.reference.match(/^(\d?\s?[\w\s]+)\s+(\d+):(\d+)(?:-(\d+))?$/)
+        if (match) {
+          const book = match[1].trim()
+          const chapter = parseInt(match[2])
+          const from = parseInt(match[3])
+          const to = match[4] ? parseInt(match[4]) : from
+          
+          return {
+            book,
+            chapter,
+            from,
+            to,
+            publisher: translationVersion
+          }
+        }
+        return null
+      }).filter(Boolean)
+
+      if (querySegments?.length > 0) {
+        api.post('/api/process', { segments: querySegments })
+          .then(({ data }) => {
+            // Find the key that isn't jobId or status
+            const label = Object.keys(data).find(k => k !== 'jobId' && k !== 'status' && !k.startsWith('_'))
+            if (label && Array.isArray(data[label])) {
+               const bookMap = {
+                 40: 'matthew',
+                 41: 'mark',
+                 42: 'luke',
+                 43: 'john'
+               }
+               const mapped = {}
+               data[label].forEach(v => {
+                 const g = bookMap[v.book]
+                 if (g) {
+                   if (!mapped[g]) mapped[g] = []
+                   mapped[g].push(v)
+                 }
+               })
+               setTranslationVerses(mapped)
+            }
+          })
+          .catch(err => console.error('Failed to fetch translation:', err))
+      }
+    } else {
+      setTranslationVerses({})
+    }
+  }, [currentSection, translationVersion])
 
   useEffect(() => {
     if (currentSection) {
@@ -367,95 +454,120 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
             >
               {t('stats.relaxed')}
             </button>
+            <div className="flex items-center gap-2 ml-4 border-l border-slate-200 dark:border-slate-700 pl-4">
+              <label className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                <Languages size={14} className="text-indigo-500" />
+                {t('stats.translation')}
+              </label>
+              <select
+                value={translationVersion || ''}
+                onChange={(e) => setTranslationVersion(e.target.value)}
+                className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">None</option>
+                {Object.keys(BibleVersionEnum).map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-        <div className="max-w-5xl mx-auto space-y-6">
-          {error && (
-            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800">
-              {t('common.error')}: {error}
-            </div>
-          )}
-
-          {currentStats && !isLoading && (
-            <>
-              {/* Summary Stats */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard
-                  icon={GitCompare}
-                  label={t('stats.total_pairs')}
-                  value={
-                    currentStats.summary
-                      ? Object.keys(currentStats.pairs || {}).length
-                      : 0
-                  }
-                  color="indigo"
-                />
-                <StatCard
-                  icon={Hash}
-                  label={t('stats.total_sequences')}
-                  value={Object.values(currentStats.pairs || {}).reduce(
-                    (sum, p) => sum + p.count,
-                    0
-                  )}
-                  color="emerald"
-                />
-                <StatCard
-                  icon={Trophy}
-                  label={t('stats.words_in_q')}
-                  value={currentStats.summary?.totalMatchingWords || 0}
-                  subValue={t('stats.showing_count', {
-                    count: currentStats.summary?.totalMatches || 0,
-                    total: currentStats.summary?.totalMatches || 0,
-                  }).replace('Showing ', '')}
-                  color="violet"
-                />
-                <StatCard
-                  icon={BookOpen}
-                  label={t('stats.active_verses')}
-                  value={Object.values(currentStats.totalWords || {}).reduce(
-                    (a, b) => a + b,
-                    0
-                  )}
-                  color="amber"
-                />
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <div className="max-w-5xl mx-auto space-y-6">
+            {error && (
+              <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800">
+                {t('common.error')}: {error}
               </div>
+            )}
 
-              {/* Pair Comparisons */}
-              <PairComparison
-                stats={currentStats}
-                selectedPair={selectedPair}
-                onSelectPair={setSelectedPair}
-              />
+            {currentStats && !isLoading && (
+              <>
+                {/* Summary Stats */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <StatCard
+                    icon={GitCompare}
+                    label={t('stats.total_pairs')}
+                    value={
+                      currentStats.summary
+                        ? Object.keys(currentStats.pairs || {}).length
+                        : 0
+                    }
+                    color="indigo"
+                  />
+                  <StatCard
+                    icon={Hash}
+                    label={t('stats.total_sequences')}
+                    value={Object.values(currentStats.pairs || {}).reduce(
+                      (sum, p) => sum + p.count,
+                      0
+                    )}
+                    color="emerald"
+                  />
+                  <StatCard
+                    icon={Trophy}
+                    label={t('stats.words_in_q')}
+                    value={currentStats.summary?.totalMatchingWords || 0}
+                    subValue={t('stats.showing_count', {
+                      count: currentStats.summary?.totalMatches || 0,
+                      total: currentStats.summary?.totalMatches || 0,
+                    }).replace('Showing ', '')}
+                    color="violet"
+                  />
+                  <StatCard
+                    icon={BookOpen}
+                    label={t('stats.active_verses')}
+                    value={Object.values(currentStats.totalWords || {}).reduce(
+                      (a, b) => a + b,
+                      0
+                    )}
+                    color="amber"
+                  />
+                </div>
 
-              {/* Selected Pair Sequences */}
+                {/* Pair Comparisons */}
+                <PairComparison
+                  stats={currentStats}
+                  selectedPair={selectedPair}
+                  onSelectPair={setSelectedPair}
+                />
+
+                {/* Selected Pair Sequences */}
               <SequencesList
                 sequences={pairSequences}
                 pair={selectedPair}
-                showReferences={true}
+                comparedVerses={comparedVerses}
+                translationVerses={translationVerses}
+                translationVersion={translationVersion}
               />
 
               {/* All Gospels Common (Q) */}
-              <AllGospelsCommonSequences stats={currentStats} />
-            </>
-          )}
+              <AllGospelsCommonSequences
+                stats={currentStats}
+                comparedVerses={comparedVerses}
+                translationVerses={translationVerses}
+                translationVersion={translationVersion}
+              />
+              </>
+            )}
 
-          {isLoading && !currentStats && (
-            <div className="flex items-center justify-center py-20">
-              <div className="text-center">
-                <RefreshCw
-                  size={32}
-                  className="animate-spin text-indigo-500 mx-auto mb-3"
-                />
-                <p className="text-slate-500 dark:text-slate-400">
-                  {t('stats.loading_stats')}
-                </p>
+            {isLoading && !currentStats && (
+              <div className="flex items-center justify-center py-20">
+                <div className="text-center">
+                  <RefreshCw
+                    size={32}
+                    className="animate-spin text-indigo-500 mx-auto mb-3"
+                  />
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {t('stats.loading_stats')}
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

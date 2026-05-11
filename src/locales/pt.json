@@ -112,7 +112,9 @@
     "total_sequences": "Sequências Totais",
     "words_in_q": "Palavras em Q",
     "active_verses": "Versículos Ativos",
-    "loading_stats": "Carregando estatísticas..."
+    "loading_stats": "Carregando estatísticas...",
+    "translation": "Tradução:",
+    "compare_translation": "Comparar com tradução"
   },
   "gospels": {
     "matthew_subtitle": "O Rei",

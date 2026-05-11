@@ -10,12 +10,20 @@ import {
   Bookmark,
   ExternalLink,
   BarChart3,
+  User,
+  LogOut,
+  LogIn,
 } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import { useState } from 'react'
+import LoginModal from './LoginModal'
 
 export default function Header({ activeSection, onSectionChange, sections }) {
   const { isDark, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { user, logout, isAuthenticated } = useAuth()
+  const [isLoginOpen, setIsLoginOpen] = useState(false)
 
   const menuItems = [
     { id: 'read', label: t('common.read'), icon: BookOpen },
@@ -52,6 +60,29 @@ export default function Header({ activeSection, onSectionChange, sections }) {
 
             {/* Right Actions */}
             <div className="flex items-center gap-1">
+              {isAuthenticated ? (
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <User size={14} className="text-indigo-600" />
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[60px]">
+                    {user.username}
+                  </span>
+                  <button
+                    onClick={logout}
+                    className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors"
+                  >
+                    <LogOut size={14} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsLoginOpen(true)}
+                  className="p-2 rounded-lg text-indigo-600 dark:text-indigo-400 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
+                  aria-label="Login"
+                >
+                  <LogIn size={20} />
+                </button>
+              )}
+
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
@@ -108,17 +139,44 @@ export default function Header({ activeSection, onSectionChange, sections }) {
             </nav>
 
             {/* Desktop Actions */}
-            <button
-              onClick={toggleTheme}
-              className="w-10 h-10 flex items-center justify-center rounded-xl
-                       text-slate-600 hover:bg-slate-100
-                       dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
-              aria-label={t('common.toggle_theme')}
-            >
-              {isDark ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+            <div className="flex items-center gap-2">
+              {isAuthenticated ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <User size={16} className="text-indigo-600" />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {user.username}
+                  </span>
+                  <button
+                    onClick={logout}
+                    className="ml-2 p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-red-500 transition-colors"
+                    title="Logout"
+                  >
+                    <LogOut size={16} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsLoginOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-100 dark:shadow-none transition-all"
+                >
+                  <LogIn size={18} />
+                  <span>Login</span>
+                </button>
+              )}
+
+              <button
+                onClick={toggleTheme}
+                className="w-10 h-10 flex items-center justify-center rounded-xl
+                         text-slate-600 hover:bg-slate-100
+                         dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
+                aria-label={t('common.toggle_theme')}
+              >
+                {isDark ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+            </div>
           </div>
         </div>
+
       </header>
 
       {/* Mobile Bottom Navigation Bar */}
@@ -155,6 +213,10 @@ export default function Header({ activeSection, onSectionChange, sections }) {
           })}
         </div>
       </nav>
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+      />
     </>
   )
 }

@@ -13,10 +13,12 @@ export function useStatisticsWorker({
   minLength = 3,
   mode = 'exact',
   similarityThreshold = 0.2,
+  translationVersion = null,
 } = {}) {
   const [results, setResults] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [transVersion, setTransVersion] = useState(translationVersion)
   const minLengthRef = useRef(minLength)
   const modeRef = useRef(mode)
   const thresholdRef = useRef(similarityThreshold)
@@ -43,6 +45,7 @@ export function useStatisticsWorker({
         minLength: minLengthRef.current,
         mode: modeRef.current,
         similarityThreshold: thresholdRef.current,
+        translationVersion: transVersion,
       })
       setResults(result[0])
       return result[0]
@@ -103,6 +106,8 @@ export function useStatisticsWorker({
     results,
     isLoading,
     error,
+    setTranslationVersion: setTransVersion,
+    translationVersion: transVersion,
   }
 }
 
@@ -127,9 +132,18 @@ export function formatSequenceWithReference(seq, g1, g2) {
     if (ref) references[g] = ref
   })
 
+  const fullTexts = {}
+  const translations = {}
+  ;['matthew', 'mark', 'luke', 'john'].forEach((g) => {
+    if (seq[`text_${g}`]) fullTexts[g] = seq[`text_${g}`]
+    if (seq[`translation_${g}`]) translations[g] = seq[`translation_${g}`]
+  })
+
   return {
     words: words2 && words !== words2 ? `${words} ≈ ${words2}` : words,
     references,
+    fullTexts,
+    translations,
     similarity: seq.similarity,
   }
 }
