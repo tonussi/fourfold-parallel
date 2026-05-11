@@ -126,6 +126,10 @@
     "prev_gospel": "Evangelho anterior",
     "next_gospel": "Próximo evangelho",
     "swipe_hint": "← Deslize para navegar →",
+    "matthew": "Mateus",
+    "mark": "Marcos",
+    "luke": "Lucas",
+    "john": "João",
     "abbrev": {
       "matthew": "Mt",
       "mark": "Mc",

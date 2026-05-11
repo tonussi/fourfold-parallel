@@ -14,7 +14,7 @@ import {
   RefreshCw,
   ChevronDown,
   Languages,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react'
 import { BibleVersionEnum } from '../verses'
 import api from '../services/api'
@@ -79,7 +79,7 @@ function PairComparison({ stats, selectedPair, onSelectPair }) {
           >
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {t(`gospels.${key}`)}
+                {t(`gospels.pairs.${key}`)}
               </span>
               <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                 {data.count}
@@ -133,11 +133,17 @@ function SequencesList({
       <div className="grid grid-cols-1 gap-4">
         {top.map((seq, idx) => {
           const formatted = formatSequenceWithReference(seq, g1, g2)
-          
+
           // Look up full texts
-          const text1 = comparedVerses[g1]?.find(v => v.verse === seq.verse1)?.scripture || ''
-          const text2 = comparedVerses[g2]?.find(v => v.verse === seq.verse2)?.scripture || ''
-          const trans = translationVerses[g1]?.find(v => v.verse === seq.verse1)?.scripture || ''
+          const text1 =
+            comparedVerses[g1]?.find((v) => v.verse === seq.verse1)
+              ?.scripture || ''
+          const text2 =
+            comparedVerses[g2]?.find((v) => v.verse === seq.verse2)
+              ?.scripture || ''
+          const trans =
+            translationVerses[g1]?.find((v) => v.verse === seq.verse1)
+              ?.scripture || ''
 
           return (
             <div
@@ -145,17 +151,17 @@ function SequencesList({
               className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm"
             >
               <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-50 dark:border-slate-800">
-                 <span className="text-xs font-bold text-indigo-500 px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30">
-                    {seq.length}w
-                 </span>
-                 <p className="verse-font text-sm font-medium text-slate-600 dark:text-slate-400 italic">
-                   "{formatted.words}"
-                 </p>
-                 {seq.similarity && (
-                   <span className="ml-auto text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
-                     {seq.similarity}%
-                   </span>
-                 )}
+                <span className="text-xs font-bold text-indigo-500 px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30">
+                  {seq.length}w
+                </span>
+                <p className="verse-font text-sm font-medium text-slate-600 dark:text-slate-400 italic">
+                  "{formatted.words}"
+                </p>
+                {seq.similarity && (
+                  <span className="ml-auto text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
+                    {seq.similarity}%
+                  </span>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -197,89 +203,6 @@ function SequencesList({
   )
 }
 
-function AllGospelsCommonSequences({
-  stats,
-  comparedVerses = {},
-  translationVerses = {},
-  translationVersion,
-}) {
-  const { t } = useTranslation()
-  const common = stats?.summary?.uniqueSequences || []
-
-  if (common.length === 0)
-    return (
-      <div className="p-4 rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-800">
-        <p className="text-sm text-violet-600 dark:text-violet-400 text-center">
-          {t('stats.no_common_all')}
-        </p>
-      </div>
-    )
-
-  const sorted = [...common].sort((a, b) => b.length - a.length)
-  const top = sorted.slice(0, 20)
-
-  return (
-    <div className="space-y-4">
-      <h4 className="text-sm font-semibold text-violet-700 dark:text-violet-300 flex items-center gap-2">
-        <BookOpen size={16} />
-        {t('stats.all_gospels_sequences')} ({common.length})
-      </h4>
-
-      <div className="space-y-6">
-        {top.map((seq, idx) => {
-          const formatted = formatSequenceWithReference(seq)
-          return (
-            <div
-              key={idx}
-              className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-violet-100 dark:border-violet-900/30 shadow-sm"
-            >
-              <div className="flex items-center gap-3 mb-4 pb-3 border-b border-violet-50 dark:border-violet-900/20">
-                <div className="px-2 py-1 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 text-xs font-bold">
-                  {seq.length} words
-                </div>
-                <p className="verse-font text-lg font-medium text-violet-800 dark:text-violet-200 italic">
-                  "{formatted.words}"
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                {['matthew', 'mark', 'luke', 'john'].map((g) => {
-                  const fullText = comparedVerses[g]?.find(v => v.verse === seq[`verse_${g}`])?.scripture
-                  const translation = translationVerses[g]?.find(v => v.verse === seq[`verse_${g}`])?.scripture
-                  if (!fullText) return null
-
-                  return (
-                    <div key={g} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                       <div className="space-y-1">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                            g === 'matthew' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30' :
-                            g === 'mark' ? 'bg-red-100 text-red-700 dark:bg-red-900/30' :
-                            g === 'luke' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30' :
-                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30'
-                          }`}>
-                            {t(`gospels.${g}`)} {formatted.references[g]}
-                          </span>
-                       </div>
-                       <p className="verse-font text-sm text-slate-700 dark:text-slate-200 leading-relaxed md:col-span-1">
-                          {fullText}
-                       </p>
-                       <div className="md:border-l md:border-slate-100 md:dark:border-slate-800 md:pl-6">
-                          <p className="verse-font text-sm text-slate-500 dark:text-slate-400 italic leading-relaxed">
-                            {translation || '—'}
-                          </p>
-                       </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 function StatisticsPage({ currentSection, selectedVersion, onBack }) {
   const { t } = useTranslation()
   const [minLength, setMinLength] = useState(3)
@@ -311,58 +234,65 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
 
     // Organize compared verses from currentSection
     const compared = {}
-    currentSection.passages?.forEach(p => {
+    currentSection.passages?.forEach((p) => {
       compared[p.gospel] = p.verses || []
     })
     setComparedVerses(compared)
 
     // Fetch translation verses if version is selected
     if (translationVersion) {
-      const querySegments = currentSection.passages?.map(p => {
-        // Reconstruct segment from passage reference
-        // Handle "Matthew 1:1" or "Matthew 1:1-8" or "1 John 1:1"
-        const match = p.reference.match(/^(\d?\s?[\w\s]+)\s+(\d+):(\d+)(?:-(\d+))?$/)
-        if (match) {
-          const book = match[1].trim()
-          const chapter = parseInt(match[2])
-          const from = parseInt(match[3])
-          const to = match[4] ? parseInt(match[4]) : from
-          
-          return {
-            book,
-            chapter,
-            from,
-            to,
-            publisher: translationVersion
+      const querySegments = currentSection.passages
+        ?.map((p) => {
+          // Reconstruct segment from passage reference
+          // Handle "Matthew 1:1" or "Matthew 1:1-8" or "1 John 1:1"
+          const match = p.reference.match(
+            /^(\d?\s?[\w\s]+)\s+(\d+):(\d+)(?:-(\d+))?$/
+          )
+          if (match) {
+            const book = match[1].trim()
+            const chapter = parseInt(match[2])
+            const from = parseInt(match[3])
+            const to = match[4] ? parseInt(match[4]) : from
+
+            return {
+              book,
+              chapter,
+              from,
+              to,
+              publisher: translationVersion,
+            }
           }
-        }
-        return null
-      }).filter(Boolean)
+          return null
+        })
+        .filter(Boolean)
 
       if (querySegments?.length > 0) {
-        api.post('/api/process', { segments: querySegments })
+        api
+          .post('/api/process', { segments: querySegments })
           .then(({ data }) => {
             // Find the key that isn't jobId or status
-            const label = Object.keys(data).find(k => k !== 'jobId' && k !== 'status' && !k.startsWith('_'))
+            const label = Object.keys(data).find(
+              (k) => k !== 'jobId' && k !== 'status' && !k.startsWith('_')
+            )
             if (label && Array.isArray(data[label])) {
-               const bookMap = {
-                 40: 'matthew',
-                 41: 'mark',
-                 42: 'luke',
-                 43: 'john'
-               }
-               const mapped = {}
-               data[label].forEach(v => {
-                 const g = bookMap[v.book]
-                 if (g) {
-                   if (!mapped[g]) mapped[g] = []
-                   mapped[g].push(v)
-                 }
-               })
-               setTranslationVerses(mapped)
+              const bookMap = {
+                40: 'matthew',
+                41: 'mark',
+                42: 'luke',
+                43: 'john',
+              }
+              const mapped = {}
+              data[label].forEach((v) => {
+                const g = bookMap[v.book]
+                if (g) {
+                  if (!mapped[g]) mapped[g] = []
+                  mapped[g].push(v)
+                }
+              })
+              setTranslationVerses(mapped)
             }
           })
-          .catch(err => console.error('Failed to fetch translation:', err))
+          .catch((err) => console.error('Failed to fetch translation:', err))
       }
     } else {
       setTranslationVerses({})
@@ -416,23 +346,6 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
 
         {/* Controls */}
         <div className="px-4 pb-3 flex flex-wrap items-center gap-6">
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-slate-600 dark:text-slate-400">
-              {t('stats.min_words')}
-            </label>
-            <select
-              value={minLength}
-              onChange={(e) => setMinLength(Number(e.target.value))}
-              className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-            >
-              {[2, 3, 4, 5, 6, 7, 8, 10, 12].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
             <button
               onClick={() => setMode('exact')}
@@ -536,21 +449,13 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
                 />
 
                 {/* Selected Pair Sequences */}
-              <SequencesList
-                sequences={pairSequences}
-                pair={selectedPair}
-                comparedVerses={comparedVerses}
-                translationVerses={translationVerses}
-                translationVersion={translationVersion}
-              />
-
-              {/* All Gospels Common (Q) */}
-              <AllGospelsCommonSequences
-                stats={currentStats}
-                comparedVerses={comparedVerses}
-                translationVerses={translationVerses}
-                translationVersion={translationVersion}
-              />
+                <SequencesList
+                  sequences={pairSequences}
+                  pair={selectedPair}
+                  comparedVerses={comparedVerses}
+                  translationVerses={translationVerses}
+                  translationVersion={translationVersion}
+                />
               </>
             )}
 

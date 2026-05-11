@@ -609,8 +609,13 @@ function ParallelReader() {
           <p className="font-medium">{displayData.title}</p>
           <div className="flex items-center gap-4">
             <span className="text-indigo-500 font-semibold tracking-wider">
-              @TONUSSILABS
+              @TLABS{' '}
             </span>
+            <img
+              src="./src/assets/tlabs.png"
+              alt="4 Labs"
+              className="w-8 h-8"
+            ></img>
             <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
             <span>
               {t('app.sections_count', { count: displaySections?.length })}
