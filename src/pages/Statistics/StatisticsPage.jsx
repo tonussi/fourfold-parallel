@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   useStatisticsWorker,
   formatSequenceWithReference,
-} from '../hooks/useStatisticsWorker'
+} from '../../hooks/useStatisticsWorker'
 import {
   GitCompare,
   Hash,
@@ -16,8 +16,8 @@ import {
   Languages,
   ArrowRight,
 } from 'lucide-react'
-import { BibleVersionEnum } from '../verses'
-import api from '../services/api'
+import { BibleVersionEnum } from '../../verses'
+import api from '../../services/api'
 
 function StatCard({ icon: Icon, label, value, subValue, color = 'indigo' }) {
   const colorClasses = {
@@ -67,35 +67,43 @@ function PairComparison({ stats, selectedPair, onSelectPair }) {
         {t('stats.gospel_comparisons')}
       </h4>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {pairs.map(([key, data]) => (
-          <button
-            key={key}
-            onClick={() => onSelectPair(key)}
-            className={`p-3 rounded-xl border text-left transition-all ${
-              selectedPair === key
-                ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600'
-                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-200 dark:hover:border-indigo-700'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {t(`gospels.pairs.${key}`)}
-              </span>
-              <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                {data.count}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>
-                {data.totalWords} {t('stats.words')}
-              </span>
-              <span className="text-emerald-600 dark:text-emerald-400">
-                {data.matchPercentage[Object.keys(data.matchPercentage)[0]]}% /{' '}
-                {data.matchPercentage[Object.keys(data.matchPercentage)[1]]}%
-              </span>
-            </div>
-          </button>
-        ))}
+        {pairs.map(([key, data]) => {
+          const [g1, g2] = key.split('-')
+          const g1Words = stats.totalWords?.[g1] || 0
+          const g2Words = stats.totalWords?.[g2] || 0
+          return (
+            <button
+              key={key}
+              onClick={() => onSelectPair(key)}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                selectedPair === key
+                  ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-200 dark:hover:border-indigo-700'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {t(`gospels.pairs.${key}`)}
+                </span>
+                <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                  {data.count}
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 mb-1">
+                {t(`gospels.${g1}`)}: {g1Words}w • {t(`gospels.${g2}`)}:{' '}
+                {g2Words}w
+              </div>
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>
+                  {data.totalWords} {t('stats.words')}
+                </span>
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {data.matchPercentage}%
+                </span>
+              </div>
+            </button>
+          )
+        })}
       </div>
     </div>
   )

@@ -9,7 +9,7 @@ import GospelColumn from '@src/components/GospelColumn'
 import MobileGospelTabs from '@src/components/MobileGospelTabs'
 import FileImport from '@src/components/FileImport'
 import Sidebar, { SidebarCard } from '@src/components/Sidebar'
-import StatisticsPage from '@src/pages/StatisticsPage'
+import StatisticsPage from '@src/pages/Statistics/StatisticsPage'
 import {
   parseReference,
   LABELS,
