@@ -33,8 +33,7 @@ ENV REDIS_PORT=6379
 # If a real Redis is available, override REDIS_HOST via docker run -e
 
 # Expose ports (Cloud Run uses PORT env, but we list them for clarity)
-EXPOSE 8080
-EXPOSE 3001
+EXPOSE 3000
 
 # Copy and setup entrypoint
 COPY entrypoint.prod.sh .
