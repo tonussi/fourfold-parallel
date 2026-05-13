@@ -9,14 +9,16 @@ services:
       - VITE_BIBLE_API_URL=${VITE_BIBLE_API_URL}
       - VITE_BIBLE_API_PORT=${VITE_BIBLE_API_PORT}
       # Used by vite.config.js proxy (server-side Node process, resolves via Docker DNS)
-      - BIBLE_API_INTERNAL_URL=${BIBLE_API_INTERNAL_URL:-http://bible-api:3001}
-      - REDIS_HOST=redis
-      - REDIS_PORT=${REDIS_PORT:-6379}
+      - VITE_BIBLE_API_INTERNAL_URL=${VITE_BIBLE_API_INTERNAL_URL}
+      - VITE_REDIS_HOST=redis
+      - VITE_REDIS_PORT=${VITE_REDIS_PORT:-6379}
     volumes:
       - ~/.ssh:/root/.ssh:ro
     depends_on:
       - redis
       - bible-api
+    networks:
+      - fourfold-parallel-network
 
   bible-api:
     build:
@@ -30,6 +32,8 @@ services:
       - REDIS_PORT=6379
     depends_on:
       - redis
+    networks:
+      - fourfold-parallel-network
 
   redis:
     image: redis
@@ -38,6 +42,8 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    networks:
+      - fourfold-parallel-network
 
   redis-commander:
     image: rediscommander/redis-commander
@@ -45,6 +51,12 @@ services:
       - REDIS_HOSTS=local:redis:6379
     ports:
       - '8088:8081'
+    networks:
+      - fourfold-parallel-network
 
 volumes:
   redis_data:
+
+networks:
+  fourfold-parallel-network:
+    external: true
