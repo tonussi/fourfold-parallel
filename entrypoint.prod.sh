@@ -10,6 +10,9 @@ if [ -f "/etc/nginx/sites-available/default.template" ]; then
     envsubst '${PORT}' < /etc/nginx/sites-available/default.template > /etc/nginx/sites-available/default
     ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 fi
+# Start Redis in the background
+echo "Starting Redis server..."
+redis-server --daemonize yes
 
 # Start Bible API in the background if the directory exists
 if [ -d "/bible-api" ]; then
