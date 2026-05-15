@@ -19,7 +19,6 @@ RUN git clone https://github.com/undergroundchurch/bible-api.git .
 RUN git checkout dev
 RUN npm rebuild
 RUN npm install
-RUN node CreateUsers.js
 RUN echo "PORT=3001\nREDIS_HOST=localhost\nREDIS_PORT=6379" > .env
 
 # Setup Nginx to serve the build
