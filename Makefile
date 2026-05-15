@@ -36,6 +36,7 @@ minor:
 	echo "Tagging from $$latest to $$new"; \
 	git tag $$new; \
 	echo "Created tag $$new"
+	git push origin dev
 	git push --tags
 
 # Increments the PATCH version (1.0.1 -> 1.0.2)
@@ -45,4 +46,5 @@ patch:
 	echo "Tagging from $$latest to $$new"; \
 	git tag $$new; \
 	echo "Created tag $$new"
+	git push origin dev
 	git push --tags
