@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 
 com.chrome.devtools.json
-.env
+.env*
 .agents
 .claude
 skills-lock.json

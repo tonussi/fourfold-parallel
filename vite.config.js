@@ -20,6 +20,7 @@ const config = {
   },
   server: {
     port: 3000,
+    host: true,
     proxy: {
       '/process': {
         target: process.env.VITE_BIBLE_API_INTERNAL_URL,

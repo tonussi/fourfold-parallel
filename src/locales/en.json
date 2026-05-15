@@ -19,7 +19,8 @@
     "matthew": "Matthew",
     "mark": "Mark",
     "luke": "Luke",
-    "john": "John"
+    "john": "John",
+    "dismiss": "Dismiss"
   },
   "settings": {
     "danger_zone": "Danger Zone",
@@ -85,6 +86,7 @@
     "no_results": "No results found for \"{{query}}\"",
     "found_results": "Found {{count}} result",
     "found_results_plural": "Found {{count}} results",
+    "found_results_zero": "Found {{count}} results",
     "text_match": "Text Match",
     "no_text": "No verse text available",
     "from_section": "From: {{section}}",
@@ -145,5 +147,19 @@
       "mark-john": "Mk × Jn",
       "luke-john": "Lk × Jn"
     }
+  },
+  "auth": {
+    "welcome_back": "Welcome Back",
+    "login_description": "Please sign in to continue to Fourfold",
+    "username": "Username",
+    "password": "Password",
+    "username_placeholder": "Enter your username",
+    "password_placeholder": "Enter your password",
+    "sign_in": "Sign In",
+    "signing_in": "Signing In...",
+    "no_account": "Don't have an account? Contact your administrator.",
+    "login": "Login",
+    "authenticating": "Authenticating...",
+    "login_failed": "Login failed"
   }
 }

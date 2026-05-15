@@ -19,7 +19,8 @@
     "matthew": "Mateus",
     "mark": "Marcos",
     "luke": "Lucas",
-    "john": "João"
+    "john": "João",
+    "dismiss": "Ignorar"
   },
   "settings": {
     "danger_zone": "Zona de Perigo",
@@ -144,5 +145,19 @@
       "mark-john": "Mc × Jo",
       "luke-john": "Lc × Jo"
     }
+  },
+  "auth": {
+    "welcome_back": "Bem-vindo de volta",
+    "login_description": "Por favor, faça login para continuar no Fourfold",
+    "username": "Usuário",
+    "password": "Senha",
+    "username_placeholder": "Digite seu usuário",
+    "password_placeholder": "Digite sua senha",
+    "sign_in": "Entrar",
+    "signing_in": "Entrando...",
+    "no_account": "Não tem uma conta? Contate seu administrador.",
+    "login": "Entrar",
+    "authenticating": "Autenticando...",
+    "login_failed": "Falha no login"
   }
 }
