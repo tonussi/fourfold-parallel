@@ -3,8 +3,10 @@
 IMAGE_NAME = fourfold-prod
 CONTAINER_PORT = 3000
 HOST_PORT = 3000
+SERVICE_NAME = fourfold-parallel
+REGION = europe-north2
 
-.PHONY: build run rebuild rerun stop clean shell major minor patch
+.PHONY: build run rebuild rerun stop clean shell major minor patch deploy
 
 build:
 	docker build -f Dockerfile -t $(IMAGE_NAME) .
@@ -38,3 +40,6 @@ minor:
 
 patch:
 	node minor.js patch
+
+deploy:
+	gcloud run deploy $(SERVICE_NAME) --source . --region $(REGION) --allow-unauthenticated
