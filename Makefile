@@ -7,7 +7,7 @@ HOST_PORT = 3000
 .PHONY: build run rebuild rerun stop clean shell major minor patch
 
 build:
-	docker build -f Dockerfile.prod -t $(IMAGE_NAME) .
+	docker build -f Dockerfile -t $(IMAGE_NAME) .
 
 # Run in detached mode so 'make stop' can find it later
 run:
