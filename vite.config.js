@@ -40,6 +40,13 @@ const config = {
   },
 }
 
+if (!process.env.VITE_BIBLE_API_INTERNAL_URL) {
+  console.log(
+    'VITE_BIBLE_API_INTERNAL_URL is not defined. API calls will fail.'
+  )
+  delete config.server.proxy
+}
+
 if (ALLOWED_HOST) {
   config.server.allowedHosts = [ALLOWED_HOST]
 }
