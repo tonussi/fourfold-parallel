@@ -28,3 +28,19 @@ rerun: stop build run
 
 clean:
 	-docker rmi $(IMAGE_NAME)
+
+# Increments the MINOR version (1.0.1 -> 1.1.0)
+minor:
+	@latest=$$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0"); \
+	new=$$(echo $$latest | awk -F. '{print $$1"."$$2+1".0"}'); \
+	echo "Tagging from $$latest to $$new"; \
+	git tag $$new; \
+	echo "Created tag $$new"
+
+# Increments the PATCH version (1.0.1 -> 1.0.2)
+patch:
+	@latest=$$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0"); \
+	new=$$(echo $$latest | awk -F. '{print $$1"."$$2"."$$3+1}'); \
+	echo "Tagging from $$latest to $$new"; \
+	git tag $$new; \
+	echo "Created tag $$new"
