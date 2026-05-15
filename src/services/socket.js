@@ -5,9 +5,6 @@ import { io } from 'socket.io-client'
  * Uses the same env vars the REST layer already relies on.
  */
 function getSocketUrl() {
-  if (import.meta.env.VITE_BIBLE_API_INTERNAL_URL) {
-    return import.meta.env.VITE_BIBLE_API_INTERNAL_URL
-  }
   const host = import.meta.env.VITE_BIBLE_API_URL || 'http://localhost'
   const port = import.meta.env.VITE_BIBLE_API_PORT || '3001'
   return `${host}:${port}`

@@ -1,9 +1,6 @@
 import axios from 'axios'
 
 const getBaseUrl = () => {
-  if (import.meta.env.VITE_BIBLE_API_INTERNAL_URL) {
-    return import.meta.env.VITE_BIBLE_API_INTERNAL_URL
-  }
   const host = import.meta.env.VITE_BIBLE_API_URL || 'http://localhost'
   const port = import.meta.env.VITE_BIBLE_API_PORT || '3001'
   return `${host}:${port}`
@@ -31,7 +28,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+    if (
+      error.response &&
+      (error.response.status === 401 || error.response.status === 403)
+    ) {
       // Optional: Clear token and redirect to login if session expired
       // localStorage.removeItem('token');
       // window.location.href = '/login';

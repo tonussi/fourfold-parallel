@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# Cloud Run sets the PORT environment variable. Default to 8080 for Nginx.
+# Cloud Run sets the PORT environment variable. Default to 3000 for Nginx.
 if [ -f "/etc/nginx/sites-available/default.template" ]; then
-    NGINX_PORT=${PORT:-8080}
+    NGINX_PORT=${PORT:-3000}
     echo "Configuring Nginx to listen on port $NGINX_PORT"
     # Replace ${PORT} in the nginx template and save to the default location
     export PORT=$NGINX_PORT
