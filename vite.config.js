@@ -22,8 +22,14 @@ const config = {
     port: 3000,
     host: true,
     proxy: {
-      '/process': {
+      '/api': {
         target: process.env.VITE_BIBLE_API_INTERNAL_URL,
+        changeOrigin: true,
+        secure: false,
+      },
+      '/socket.io': {
+        target: process.env.VITE_BIBLE_API_INTERNAL_URL,
+        ws: true,
         changeOrigin: true,
         secure: false,
       },

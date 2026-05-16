@@ -5,6 +5,7 @@ CONTAINER_PORT = 3000
 HOST_PORT = 3000
 SERVICE_NAME = fourfold-parallel
 REGION = europe-north2
+NETWORK_NAME = fourfold-parallel-network
 
 .PHONY: build run rebuild rerun stop clean shell major minor patch deploy
 
@@ -13,7 +14,7 @@ build:
 
 # Run in detached mode so 'make stop' can find it later
 run:
-	docker run -d -p $(HOST_PORT):$(CONTAINER_PORT) -e REDIS_HOST=localhost --name $(IMAGE_NAME)-container $(IMAGE_NAME)
+	docker run --network ${NETWORK_NAME} -d -p $(HOST_PORT):$(CONTAINER_PORT) -e REDIS_HOST=localhost --name $(IMAGE_NAME)-container $(IMAGE_NAME)
 
 rebuild: build
 

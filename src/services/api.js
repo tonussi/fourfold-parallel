@@ -1,12 +1,10 @@
 import axios from 'axios'
 
 const getBaseUrl = () => {
-  if (import.meta.env.PROD || window.location.port === '3000') {
-    return ''
-  }
   const host = import.meta.env.VITE_BIBLE_API_URL || 'http://localhost'
   const port = import.meta.env.VITE_BIBLE_API_PORT || '3001'
-  return `${host}:${port}`
+  const url = `${host}:${port}`
+  return url
 }
 
 const api = axios.create({

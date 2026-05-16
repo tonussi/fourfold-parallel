@@ -16,7 +16,7 @@ import {
   Languages,
   ArrowRight,
 } from 'lucide-react'
-import { BibleVersionEnum } from '../../verses'
+import { BibleVersionEnum, fetchVerses } from '../../verses'
 import api from '../../services/api'
 
 function StatCard({ icon: Icon, label, value, subValue, color = 'indigo' }) {
@@ -275,9 +275,8 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
         .filter(Boolean)
 
       if (querySegments?.length > 0) {
-        api
-          .post('/api/process', { segments: querySegments })
-          .then(({ data }) => {
+        fetchVerses(querySegments, translationVersion)
+          .then((data) => {
             // Find the key that isn't jobId or status
             const label = Object.keys(data).find(
               (k) => k !== 'jobId' && k !== 'status' && !k.startsWith('_')

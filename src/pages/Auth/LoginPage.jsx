@@ -9,9 +9,9 @@ function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+
+  const [username, setUsername] = useState('tlabs')
+  const [password, setPassword] = useState('tlabs')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -21,12 +21,14 @@ function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    
+
     try {
       await login(username, password)
       navigate(from, { replace: true })
     } catch (err) {
-      setError(err.response?.data?.message || err.message || t('auth.login_failed'))
+      setError(
+        err.response?.data?.message || err.message || t('auth.login_failed')
+      )
     } finally {
       setLoading(false)
     }
@@ -43,7 +45,8 @@ function LoginPage() {
             {t('auth.welcome_back') || 'Welcome Back'}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2">
-            {t('auth.login_description') || 'Please sign in to continue to Fourfold'}
+            {t('auth.login_description') ||
+              'Please sign in to continue to Fourfold'}
           </p>
         </div>
 
@@ -51,7 +54,10 @@ function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 flex items-start gap-3">
-                <AlertCircle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={18} />
+                <AlertCircle
+                  className="text-red-600 dark:text-red-400 shrink-0 mt-0.5"
+                  size={18}
+                />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-red-800 dark:text-red-300">
                     {error}
@@ -80,7 +86,9 @@ function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all dark:text-white"
-                  placeholder={t('auth.username_placeholder') || 'Enter your username'}
+                  placeholder={
+                    t('auth.username_placeholder') || 'Enter your username'
+                  }
                   required
                 />
               </div>
@@ -99,7 +107,9 @@ function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all dark:text-white"
-                  placeholder={t('auth.password_placeholder') || 'Enter your password'}
+                  placeholder={
+                    t('auth.password_placeholder') || 'Enter your password'
+                  }
                   required
                 />
               </div>
@@ -115,13 +125,16 @@ function LoginPage() {
               ) : (
                 <LogIn size={20} />
               )}
-              {loading ? t('auth.signing_in') || 'Signing In...' : t('auth.sign_in') || 'Sign In'}
+              {loading
+                ? t('auth.signing_in') || 'Signing In...'
+                : t('auth.sign_in') || 'Sign In'}
             </button>
           </form>
 
           <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 text-center">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t('auth.no_account') || 'Don\'t have an account? Contact your administrator.'}
+              {t('auth.no_account') ||
+                "Don't have an account? Contact your administrator."}
             </p>
           </div>
         </div>
