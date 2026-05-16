@@ -458,6 +458,7 @@ function ParallelReader() {
                 getPassageForGospel={getPassageForGospel}
                 highlightedWord={highlightedWord}
                 onWordClick={setHighlightedWord}
+                loading={isLoadingVerses}
               />
             ) : (
               /* Desktop: 4-Column Grid */
@@ -474,6 +475,7 @@ function ParallelReader() {
                           verses={passage.verses}
                           highlightedWord={highlightedWord}
                           onWordClick={setHighlightedWord}
+                          loading={isLoadingVerses}
                         />
                       )
                     })}

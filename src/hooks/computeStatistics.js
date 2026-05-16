@@ -24,6 +24,7 @@ class ComputeStatisticsWorker {
         if (timer) clearTimeout(timer)
         socket.off('compute-statistics-completed', onCompleted)
         socket.off('compute-statistics-failed', onFailed)
+        socket.off('finish', onFinish)
       }
 
       function onCompleted(payload) {
@@ -48,10 +49,17 @@ class ComputeStatisticsWorker {
         reject(new Error(payload.error || 'Compute statistics job failed'))
       }
 
+      function onFinish(payload) {
+        if (expectedJobId === null) return
+        if (String(payload.jobId) !== String(expectedJobId)) return
+        socket.disconnect()
+      }
+
       const executeJob = () => {
         // Attach listeners BEFORE triggering the job to avoid race conditions
         socket.on('compute-statistics-completed', onCompleted)
         socket.on('compute-statistics-failed', onFailed)
+        socket.on('finish', onFinish)
 
         api
           .post('/api/compute-statistics', { verses, minLength, mode, similarityThreshold, translationVersion })
@@ -92,6 +100,7 @@ class ComputeStatisticsWorker {
           executeJob()
         }
         socket.on('connect', onConnect)
+        socket.connect()
         
         // Safety timeout in case socket never connects
         setTimeout(() => {

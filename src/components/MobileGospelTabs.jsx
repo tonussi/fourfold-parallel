@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import VerseText from './VerseText'
+import { Skeleton, GospelColumnSkeleton } from './Skeleton'
 
 export default function MobileGospelTabs({
   gospels,
@@ -12,6 +13,7 @@ export default function MobileGospelTabs({
   getPassageForGospel,
   highlightedWord,
   onWordClick,
+  loading = false,
 }) {
   const { t } = useTranslation()
   const [touchStart, setTouchStart] = useState(null)
@@ -242,8 +244,10 @@ export default function MobileGospelTabs({
           </div>
 
           {/* Reference Badge */}
-          {passage.reference && (
-            <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+          <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 h-[37px] flex items-center">
+            {loading ? (
+              <Skeleton className="h-4 w-32 rounded-full" />
+            ) : passage.reference ? (
               <span
                 className={`
                 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
@@ -254,12 +258,18 @@ export default function MobileGospelTabs({
               >
                 {passage.reference}
               </span>
-            </div>
-          )}
+            ) : (
+              <span className="text-xs text-slate-400 italic">
+                {t('gospels.no_parallel')}
+              </span>
+            )}
+          </div>
 
           {/* Scripture Content */}
           <div className="p-4">
-            {passage?.verses?.length > 0 ? (
+            {loading ? (
+              <GospelColumnSkeleton />
+            ) : passage?.verses?.length > 0 ? (
               <div className="space-y-4">
                 {passage.verses.map((verse, index) => (
                   <p

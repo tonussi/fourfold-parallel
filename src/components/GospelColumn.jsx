@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { ScrollText, BookOpen, Bookmark, Share2 } from 'lucide-react'
 import VerseText from './VerseText'
+import { Skeleton, GospelColumnSkeleton } from './Skeleton'
 
 export default function GospelColumn({
   gospel,
@@ -8,6 +9,7 @@ export default function GospelColumn({
   verses,
   highlightedWord,
   onWordClick,
+  loading = false,
 }) {
   const { t } = useTranslation()
 
@@ -85,8 +87,10 @@ export default function GospelColumn({
       </div>
 
       {/* Reference Header */}
-      <div className="px-4 py-2 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
-        {reference ? (
+      <div className="px-4 py-2 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 h-[37px] flex items-center">
+        {loading ? (
+          <Skeleton className="h-4 w-32" />
+        ) : reference ? (
           <div className="flex items-center gap-2 text-sm">
             <ScrollText size={14} className={config.iconColor} />
             <span className="font-medium text-slate-700 dark:text-slate-300">
@@ -102,7 +106,9 @@ export default function GospelColumn({
 
       {/* Verses Content */}
       <div className="flex-1 overflow-y-auto scrollbar-thin p-3 sm:p-4">
-        {verses.length > 0 ? (
+        {loading ? (
+          <GospelColumnSkeleton />
+        ) : verses.length > 0 ? (
           <div className="space-y-3 sm:space-y-4">
             {verses.map((verse, index) => (
               <p
