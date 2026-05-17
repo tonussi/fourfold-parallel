@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 const getBaseUrl = () => {
-  const host = import.meta.env.VITE_BIBLE_API_URL || 'http://localhost'
-  const port = import.meta.env.VITE_BIBLE_API_PORT || '3001'
+  const host = import.meta.env.VITE_BIBLE_API_URL
+  const port = import.meta.env.VITE_BIBLE_API_PORT
   const url = `${host}:${port}`
   return url
 }

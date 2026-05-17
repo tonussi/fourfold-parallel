@@ -6,7 +6,7 @@ import { io } from 'socket.io-client'
  */
 function getSocketUrl() {
   const host = import.meta.env.VITE_BIBLE_API_URL || 'http://localhost'
-  const port = import.meta.env.VITE_BIBLE_API_PORT || '3001'
+  const port = import.meta.env.VITE_BIBLE_API_PORT
   return `${host}:${port}`
 }
 
