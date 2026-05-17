@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { LogIn, User, Lock, AlertCircle, Loader2 } from 'lucide-react'
+import versionData from '../../../VERSION.json'
 
 function LoginPage() {
   const { t } = useTranslation()
@@ -139,10 +140,13 @@ function LoginPage() {
           </div>
         </div>
 
-        <div className="mt-8 flex items-center justify-center gap-2 text-slate-400 text-sm font-medium">
-          <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
-          <span>© 2026 TLABS</span>
-          <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
+        <div className="mt-8 flex flex-col items-center justify-center gap-2 text-slate-400 text-sm font-medium">
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
+            <span>© 2026 TLABS</span>
+            <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
+          </div>
+          <span className="text-xs text-slate-500">v{versionData.version}</span>
         </div>
       </div>
     </div>

@@ -10,11 +10,11 @@ NETWORK_NAME = fourfold-parallel-network
 .PHONY: build run rebuild rerun stop clean shell major minor patch deploy
 
 build:
-	docker build -f Dockerfile -t $(IMAGE_NAME) .
+	docker build --platform linux/amd64 -f Dockerfile -t $(IMAGE_NAME) .
 
 # Run in detached mode so 'make stop' can find it later
 run:
-	docker run --network ${NETWORK_NAME} -d -p $(HOST_PORT):$(CONTAINER_PORT) -e REDIS_HOST=localhost --name $(IMAGE_NAME)-container $(IMAGE_NAME)
+	docker run --platform linux/amd64 --network ${NETWORK_NAME} -d -p $(HOST_PORT):$(CONTAINER_PORT) -e REDIS_HOST=localhost --name $(IMAGE_NAME)-container $(IMAGE_NAME)
 
 rebuild: build
 
@@ -43,4 +43,7 @@ patch:
 	node minor.js patch
 
 deploy:
-	gcloud run deploy $(SERVICE_NAME) --source . --region $(REGION) --allow-unauthenticated
+	gcloud run deploy $(SERVICE_NAME) --source . --region $(REGION) --allow-unauthenticated --port ${HOST_PORT}
+
+logs:
+	docker logs -f $(SERVICE_NAME)-container

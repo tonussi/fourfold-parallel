@@ -71,5 +71,6 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 # Skills
 
-- Use .agents/design/SKILL.md
-- Use .agents/caveman/SKILL.md
+- Use .agents/skills/design/SKILL.md
+- Use .agents/skills/caveman/SKILL.md
+- Use .agents/skills/web-artifacts-builder/SKILL.md
