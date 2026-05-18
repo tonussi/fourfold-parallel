@@ -54,6 +54,17 @@ const branch = getBranch()
 console.log(`\n🚀 Bumping ${bumpType.toUpperCase()}: ${latest} -> ${next}`)
 
 try {
+  // Write and commit VERSION.json first, so the tag includes this change
+  writeFileSync('VERSION.json', `{"version": "${next}"}`, 'utf8')
+  console.log(`💾 Saved version ${next} to VERSION.json`)
+
+  execSync('git add VERSION.json')
+  const status = execSync('git status --porcelain VERSION.json').toString().trim()
+  if (status) {
+    execSync(`git commit -m "chore: bump version to ${next}"`)
+    console.log(`📝 Committed VERSION.json for version ${next}`)
+  }
+
   // Check if tag already exists
   const existing = execSync(`git tag -l ${next}`).toString().trim()
   if (existing) {
@@ -67,9 +78,6 @@ try {
   console.log(`📤 Pushing to origin ${branch}...`)
   execSync(`git push origin ${branch}`)
   execSync(`git push origin ${next}`)
-
-  writeFileSync('VERSION.json', `{"version": "${next}"}`, 'utf8')
-  console.log(`💾 Saved version ${next} to VERSION file`)
 
   console.log(`🎉 Done!`)
 } catch (err) {
