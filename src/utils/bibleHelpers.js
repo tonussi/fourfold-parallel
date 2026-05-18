@@ -7,15 +7,33 @@ export const EXAMPLES = [
     name: 'The Complete Gospels (Q)',
     file: 'TheCompleteGospels-Q.csv',
     type: 'CSV',
+    tooltip:
+      'Robert J. Miller, ed., The Complete Gospels: Annotated Scholars Version (Sonoma, CA: Polebridge Press 1992).',
   },
-  { name: 'Bart Ehrman - Q', file: 'BartEhrman-Q.csv', type: 'CSV' },
-  { name: 'A Theology of Q', file: 'ATheologyOfQ-Q.csv', type: 'CSV' },
-  { name: 'Research Notes', file: 'Q-Researchers.md', type: 'MD' },
-  { name: 'CJ Cornthwaite', file: 'CJCornthwaite.csv', type: 'CSV' },
+  {
+    name: 'Bart Ehrman - Q',
+    file: 'BartEhrman-Q.csv',
+    type: 'CSV',
+    tooltip: 'https://ehrmanblog.org/the-q-source-used-by-matthew-and-luke/',
+  },
+  {
+    name: 'A Theology of Q',
+    file: 'ATheologyOfQ-Q.csv',
+    type: 'CSV',
+    tooltip:
+      'Richard A. Edwards, A Theology of Q: Eschatology, Prophecy, and Wisdom (Philadelphia, PA: Fortress Press 1976).',
+  },
+  {
+    name: 'CJ Cornthwaite',
+    file: 'CJCornthwaite.csv',
+    type: 'CSV',
+    tooltip: 'https://youtu.be/_ReZquQoyOYs',
+  },
   {
     name: 'Parallel Reading (Full - Beta Version)',
     file: 'ParallelReading-Full-BetaVersion.csv',
     type: 'CSV',
+    tooltip: 'http://www.parallelgospels.net/',
   },
 ]
 

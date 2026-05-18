@@ -46,7 +46,7 @@ export default function SettingsSection() {
   }
 
   const handleDownloadExample = (filename) => {
-    const url = `/src/assets/examples/${filename}`
+    const url = `${window.location.origin}/assets/examples/${filename}`
     const link = document.createElement('a')
     link.href = url
     link.download = filename
