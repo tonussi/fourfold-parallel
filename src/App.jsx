@@ -1,23 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import { ThemeProvider } from '@src/contexts/ThemeContext'
-import { SidebarProvider, useSidebar } from '@src/contexts/SidebarContext'
+import { useSidebar } from '@src/contexts/SidebarContext'
 import Header from '@src/components/Header'
 import SectionNav from '@src/components/SectionNav'
-import GospelColumn from '@src/components/GospelColumn'
-import MobileGospelTabs from '@src/components/MobileGospelTabs'
-import FileImport from '@src/components/FileImport'
-import Sidebar, { SidebarCard } from '@src/components/Sidebar'
+import { SidebarCard } from '@src/components/Sidebar'
 import StatisticsPage from '@src/pages/Statistics/StatisticsPage'
-import {
-  parseReference,
-  LABELS,
-  BOOKS_PROTESTANT,
-  BibleVersionEnum,
-  fetchVerses,
-} from '@src/verses'
-import { Search, Download, BookOpen, FileText, BarChart3 } from 'lucide-react'
+import { parseReference, fetchVerses, BibleVersionEnum } from '@src/verses'
+import { BookOpen, FileText, Download, BarChart3 } from 'lucide-react'
 import parallelData from '@src/data/parallelVerses.json'
 import {
   selectCurrentVersion,
@@ -29,98 +19,19 @@ import {
   selectSelectedFont,
   setSelectedFont,
   selectImportedData,
-  setImportedData,
-  purgePersistence,
 } from '@src/store'
+
+// Refactored helper functions, subcomponents, and constants
+import {
+  GOSPELS,
+  transformData,
+} from '@src/utils/bibleHelpers'
+import ReaderSection from '@src/components/ParallelReader/ReaderSection'
+import SearchSection from '@src/components/ParallelReader/SearchSection'
+import BookmarksSection from '@src/components/ParallelReader/BookmarksSection'
+import SettingsSection from '@src/components/ParallelReader/SettingsSection'
+import Footer from '@src/components/ParallelReader/Footer'
 import './App.css'
-
-const GOSPELS = ['matthew', 'mark', 'luke', 'john']
-
-const EXAMPLES = [
-  {
-    name: 'The Complete Gospels (Q)',
-    file: 'TheCompleteGospels-Q.csv',
-    type: 'CSV',
-  },
-  { name: 'Bart Ehrman - Q', file: 'BartEhrman-Q.csv', type: 'CSV' },
-  { name: 'A Theology of Q', file: 'ATheologyOfQ-Q.csv', type: 'CSV' },
-  { name: 'Research Notes', file: 'Q-Researchers.md', type: 'MD' },
-  { name: 'CJ Cornthwaite', file: 'CJCornthwaite.csv', type: 'CSV' },
-  {
-    name: 'Parallel Reading (Full - Beta Version)',
-    file: 'ParallelReading-Full-BetaVersion.csv',
-    type: 'CSV',
-  },
-]
-
-const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
-
-// Transform simplified verse format to full format with reference
-const transformData = (data) => {
-  if (!data?.sections) return data
-
-  return {
-    ...data,
-    sections: data.sections.map((section) => ({
-      ...section,
-      passages: section.passages.map((passage) => {
-        // If already has reference and verses array, return as-is
-        if (
-          passage.reference &&
-          Array.isArray(passage.verses) &&
-          passage.verses.length > 0
-        ) {
-          return passage
-        }
-        // Transform simplified format
-        const versesStr = passage.verses || ''
-        if (!versesStr) {
-          return { ...passage, reference: '', verses: [] }
-        }
-
-        // Parse "chapter:verseFrom-verseTo" or "chapter:verse" format
-        const match = versesStr.match(/^(\d+):(\d+)(?:-(\d+))?$/)
-        if (!match) {
-          return { ...passage, reference: '', verses: [] }
-        }
-
-        const chapter = match[1]
-        const startVerse = parseInt(match[2], 10)
-        const endVerse = match[3] ? parseInt(match[3], 10) : startVerse
-
-        const bookName = capitalize(passage.gospel)
-        const verseRef =
-          startVerse === endVerse
-            ? `${chapter}:${startVerse}`
-            : `${chapter}:${startVerse}-${endVerse}`
-        const reference = `${bookName} ${verseRef}`
-
-        // Create empty verse array (text would be fetched from API)
-        const verses = []
-        for (let v = startVerse; v <= endVerse; v++) {
-          verses.push({ verse: v, text: '' })
-        }
-
-        return { ...passage, reference, verses }
-      }),
-    })),
-  }
-}
-
-// Helper function using @verses library to process verse references
-function processVerseReference(reference) {
-  if (!reference) return null
-  // Use the verses library to parse the reference
-  const parsed = parseReference(reference)
-  return parsed
-}
-
-// Get display title from verses library
-function getBookDisplayTitle(gospel) {
-  const bookNum =
-    LABELS[gospel] || LABELS[gospel.charAt(0).toUpperCase() + gospel.slice(1)]
-  return bookNum ? BOOKS_PROTESTANT[bookNum] : gospel
-}
 
 function ParallelReader() {
   const { t } = useTranslation()
@@ -174,8 +85,6 @@ function ParallelReader() {
       fontMap[selectedFont] || fontMap.serif
     )
   }, [selectedFont])
-
-  const { sections } = parallelData
 
   // Detect mobile viewport
   useEffect(() => {
@@ -334,39 +243,6 @@ function ParallelReader() {
     }
   }
 
-  const handleImport = (data) => {
-    dispatch(setImportedData(data))
-    dispatch(setCurrentSectionIndex(0))
-  }
-
-  const handleResetToDefault = () => {
-    dispatch(setImportedData(null))
-    dispatch(setCurrentSectionIndex(0))
-  }
-
-  const handleResetApp = async () => {
-    if (
-      confirm(
-        t('settings.reset_confirm') ||
-          'Are you sure you want to reset the app? This will clear all session data.'
-      )
-    ) {
-      await purgePersistence()
-      sessionStorage.clear()
-      window.location.reload()
-    }
-  }
-
-  const handleDownloadExample = (filename) => {
-    const url = `/src/assets/examples/${filename}`
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
   // Swipe navigation for mobile
   const handleSwipe = useCallback(
     (direction) => {
@@ -381,9 +257,6 @@ function ParallelReader() {
   )
 
   const getPassageForGospel = (gospel) => {
-    // Use verses library to get book display name
-    const bookTitle = getBookDisplayTitle(gospel)
-
     const passage = currentSection?.passages?.find(
       (p) => p.gospel === gospel
     ) || {
@@ -446,186 +319,32 @@ function ParallelReader() {
         )}
         {activeSection === 'read' && (
           <div className="h-full flex flex-col">
-            {/* Mobile: Tabbed View with Swipe */}
-            {isMobile ? (
-              <MobileGospelTabs
-                gospels={GOSPELS}
-                gospelConfig={GOSPEL_CONFIG}
-                activeTab={activeGospelTab}
-                onTabChange={(tab) => dispatch(setActiveGospelTab(tab))}
-                onSwipe={handleSwipe}
-                currentSection={currentSection}
-                getPassageForGospel={getPassageForGospel}
-                highlightedWord={highlightedWord}
-                onWordClick={setHighlightedWord}
-                loading={isLoadingVerses}
-              />
-            ) : (
-              /* Desktop: 4-Column Grid */
-              <div className="flex-1 p-4 lg:p-6 overflow-hidden">
-                <div className="max-w-[1920px] mx-auto h-full">
-                  <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 auto-rows-fr h-full">
-                    {GOSPELS.map((gospel) => {
-                      const passage = getPassageForGospel(gospel)
-                      return (
-                        <GospelColumn
-                          key={gospel}
-                          gospel={gospel}
-                          reference={passage.reference}
-                          verses={passage.verses}
-                          highlightedWord={highlightedWord}
-                          onWordClick={setHighlightedWord}
-                          loading={isLoadingVerses}
-                        />
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
+            <ReaderSection
+              isMobile={isMobile}
+              activeGospelTab={activeGospelTab}
+              gospelConfig={GOSPEL_CONFIG}
+              onTabChange={(tab) => dispatch(setActiveGospelTab(tab))}
+              onSwipe={handleSwipe}
+              currentSection={currentSection}
+              getPassageForGospel={getPassageForGospel}
+              highlightedWord={highlightedWord}
+              onWordClick={setHighlightedWord}
+              loading={isLoadingVerses}
+            />
           </div>
         )}
 
-        {activeSection === 'search' && (
-          <div className="flex items-center justify-center h-[calc(100vh-220px)] md:h-[calc(100vh-200px)]">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                {t('common.search')}
-              </h2>
-              <p className="text-slate-500 dark:text-slate-400 mb-4">
-                {t('app.search_description')}
-              </p>
-              <a
-                href="/search"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors"
-              >
-                <Search className="w-5 h-5" />
-                {t('app.open_search')}
-              </a>
-            </div>
-          </div>
-        )}
+        {activeSection === 'search' && <SearchSection />}
 
-        {activeSection === 'bookmarks' && (
-          <div className="flex items-center justify-center h-[calc(100vh-220px)] md:h-[calc(100vh-200px)]">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                {t('common.bookmarks')}
-              </h2>
-              <p className="text-slate-500 dark:text-slate-400">
-                {t('app.bookmarks_description')}
-              </p>
-            </div>
-          </div>
-        )}
+        {activeSection === 'bookmarks' && <BookmarksSection />}
 
-        {activeSection === 'settings' && (
-          <div className="h-[calc(100vh-220px)] md:h-[calc(100vh-200px)] overflow-y-auto p-4 lg:p-6 mb-16 md:mb-0">
-            <div className="max-w-2xl mx-auto space-y-6">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-                {t('common.settings')}
-              </h2>
-
-              {/* Example Downloads */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600">
-                    <Download size={20} />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                    {t('app.examples_title')}
-                  </h3>
-                </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                  {t('app.examples_description')}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {EXAMPLES.map((example) => (
-                    <button
-                      key={example.file}
-                      onClick={() => handleDownloadExample(example.file)}
-                      className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 transition-all group"
-                    >
-                      <div className="text-left">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                          {example.name}
-                        </p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">
-                          {example.type} File
-                        </p>
-                      </div>
-                      <Download
-                        size={16}
-                        className="text-slate-400 group-hover:text-indigo-500 transition-colors"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Import Section */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                <FileImport onImport={handleImport} />
-              </div>
-
-              {/* Reset to Default */}
-              {importedData && (
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                  <h3 className="font-bold text-slate-900 dark:text-white mb-2">
-                    {t('app.current_data_source')}
-                  </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                    {t('app.displaying')}:{' '}
-                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                      {displayData.title}
-                    </span>
-                  </p>
-                  <button
-                    onClick={handleResetToDefault}
-                    className="px-6 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all active:scale-95"
-                  >
-                    {t('app.restore_default')}
-                  </button>
-                </div>
-              )}
-
-              {/* Danger Zone */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-red-100 dark:border-red-900/20 p-6 shadow-sm">
-                <h3 className="font-bold text-red-600 dark:text-red-400 mb-2">
-                  {t('settings.danger_zone') || 'Danger Zone'}
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                  {t('settings.reset_description') ||
-                    'This will clear all your session data, including bookmarks, history, and custom settings.'}
-                </p>
-                <button
-                  onClick={handleResetApp}
-                  className="px-6 py-2.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all active:scale-95 shadow-md shadow-red-500/20"
-                >
-                  {t('settings.reset_app') || 'Reset App'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {activeSection === 'settings' && <SettingsSection />}
       </main>
 
-      {/* Footer Info - Hidden on mobile to save space */}
-      <footer className="hidden md:block py-3 px-8 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
-        <div className="max-w-[1920px] mx-auto flex items-center justify-between text-xs text-slate-400">
-          <p className="font-medium">{displayData.title}</p>
-          <div className="flex items-center gap-4">
-            <span className="text-indigo-500 font-semibold tracking-wider">
-              @TLABS{' '}
-            </span>
-            <img src="assets/tlabs.png" alt="4 Labs" className="w-8 h-8"></img>
-            <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-            <span>
-              {t('app.sections_count', { count: displaySections?.length })}
-            </span>
-          </div>
-        </div>
-      </footer>
+      <Footer
+        displayDataTitle={displayData.title}
+        sectionsCount={displaySections?.length}
+      />
     </>
   )
 }
