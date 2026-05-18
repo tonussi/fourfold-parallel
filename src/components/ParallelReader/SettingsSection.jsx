@@ -80,19 +80,27 @@ export default function SettingsSection() {
               <button
                 key={example.file}
                 onClick={() => handleDownloadExample(example.file)}
-                className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 transition-all group"
+                className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 transition-all text-left group"
+                title={example.tooltip}
               >
-                <div className="text-left">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                <div className="text-left flex-1 min-w-0 mr-4">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                     {example.name}
                   </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
-                    {example.type} File
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-slate-200/60 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-400 shrink-0">
+                      {example.type}
+                    </span>
+                    {example.tooltip && (
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate italic">
+                        {example.tooltip}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <Download
                   size={16}
-                  className="text-slate-400 group-hover:text-indigo-500 transition-colors"
+                  className="text-slate-400 group-hover:text-indigo-500 transition-colors shrink-0"
                 />
               </button>
             ))}

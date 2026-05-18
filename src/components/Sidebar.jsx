@@ -28,7 +28,7 @@ export default function Sidebar() {
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[90] lg:hidden"
           onClick={toggleSidebar}
         />
       )}
@@ -36,20 +36,20 @@ export default function Sidebar() {
       {/* Sidebar Container */}
       <aside
         className={`
-          fixed top-0 left-0 h-full z-50 bg-white dark:bg-slate-950 
+          fixed top-0 left-0 h-full z-[100] bg-white dark:bg-slate-950 
           border-r border-slate-200 dark:border-slate-800
           transition-all duration-300 ease-in-out flex flex-col
           ${
             isOpen
               ? 'w-80 translate-x-0'
-              : 'w-0 -translate-x-full lg:w-16 lg:translate-x-0'
+              : 'w-80 -translate-x-full lg:w-16 lg:translate-x-0'
           }
         `}
       >
         {/* Toggle Button (Desktop) */}
         <button
           onClick={toggleSidebar}
-          className="absolute -right-3 top-20 bg-indigo-600 text-white p-1 rounded-full shadow-lg z-50 hidden lg:flex items-center justify-center hover:bg-indigo-700 transition-colors"
+          className="absolute -right-3 top-20 bg-indigo-600 text-white p-1 rounded-full shadow-lg z-[100] hidden lg:flex items-center justify-center hover:bg-indigo-700 transition-colors"
         >
           {isOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
         </button>

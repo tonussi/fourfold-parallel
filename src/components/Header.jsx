@@ -68,7 +68,7 @@ export default function Header({ activeSection, onSectionChange, sections }) {
                   </span>
                   <button
                     onClick={logout}
-                    className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors"
+                    className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors min-w-0 min-h-0 shrink-0"
                   >
                     <LogOut size={14} />
                   </button>
@@ -148,7 +148,7 @@ export default function Header({ activeSection, onSectionChange, sections }) {
                   </span>
                   <button
                     onClick={logout}
-                    className="ml-2 p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-red-500 transition-colors"
+                    className="ml-2 p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-red-500 transition-colors min-w-0 min-h-0 shrink-0"
                     title="Logout"
                   >
                     <LogOut size={16} />
