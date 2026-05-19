@@ -1,5 +1,5 @@
 import api from '../services/api'
-import socket from '../services/socket'
+import socket, { registerJob, deregisterJob } from '../services/socket'
 
 /**
  * ComputeStatisticsWorker — offloads heavy computation to the backend
@@ -24,7 +24,9 @@ class ComputeStatisticsWorker {
         if (timer) clearTimeout(timer)
         socket.off('compute-statistics-completed', onCompleted)
         socket.off('compute-statistics-failed', onFailed)
-        socket.off('finish', onFinish)
+        if (expectedJobId) {
+          deregisterJob(expectedJobId)
+        }
       }
 
       function onCompleted(payload) {
@@ -49,22 +51,16 @@ class ComputeStatisticsWorker {
         reject(new Error(payload.error || 'Compute statistics job failed'))
       }
 
-      function onFinish(payload) {
-        if (expectedJobId === null) return
-        if (String(payload.jobId) !== String(expectedJobId)) return
-        socket.disconnect()
-      }
-
       const executeJob = () => {
         // Attach listeners BEFORE triggering the job to avoid race conditions
         socket.on('compute-statistics-completed', onCompleted)
         socket.on('compute-statistics-failed', onFailed)
-        socket.on('finish', onFinish)
 
         api
           .post('/api/compute-statistics', { verses, minLength, mode, similarityThreshold, translationVersion })
           .then(({ data }) => {
             expectedJobId = data.jobId
+            registerJob(expectedJobId)
 
             // Check if we already received the completion event while waiting for the HTTP response
             if (bufferedPayload && String(bufferedPayload.jobId) === String(expectedJobId)) {

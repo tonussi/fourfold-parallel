@@ -31,6 +31,37 @@ socket.on('connect_error', (err) => {
   console.warn('[ws] connection error', err.message)
 })
 
+// Keep track of active job IDs that we are waiting for.
+const activeJobs = new Set()
+
+/**
+ * Register a job ID that is currently active.
+ * Ensures the socket is connected.
+ */
+export function registerJob(jobId) {
+  if (!jobId) return
+  activeJobs.add(String(jobId))
+  console.log(`[ws] Registered job ${jobId}. Active jobs:`, Array.from(activeJobs))
+  if (!socket.connected) {
+    console.log(`[ws] Connecting for job ${jobId}`)
+    socket.connect()
+  }
+}
+
+/**
+ * Deregister a job ID when it finishes or fails.
+ * Disconnects the socket if no active jobs remain.
+ */
+export function deregisterJob(jobId) {
+  if (!jobId) return
+  activeJobs.delete(String(jobId))
+  console.log(`[ws] Deregistered job ${jobId}. Active jobs:`, Array.from(activeJobs))
+  if (activeJobs.size === 0 && socket.connected) {
+    console.log('[ws] All jobs completed. Disconnecting socket.')
+    socket.disconnect()
+  }
+}
+
 /**
  * Inactivity Tracker: Disconnects the socket after 3 hours of inactivity.
  * Reconnects automatically if the user becomes active again.
@@ -63,5 +94,4 @@ if (typeof window !== 'undefined') {
   // Initial start
   resetActivityTimer()
 }
-
 export default socket
