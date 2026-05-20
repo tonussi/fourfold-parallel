@@ -100,7 +100,19 @@ function ParallelReader() {
     [importedData]
   )
   const displaySections = displayData.sections
-  const currentSection = displaySections[currentSectionIndex] || {
+
+  const currentSectionKey = useMemo(() => {
+    const sec = displaySections?.[currentSectionIndex]
+    if (!sec) return ''
+    return `${sec.title}_${sec.passages.map((p) => `${p.gospel}:${p.reference || p.verses}`).join(',')}`
+  }, [displaySections, currentSectionIndex])
+
+  const stableCurrentSection = useMemo(() => {
+    return displaySections?.[currentSectionIndex]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSectionKey])
+
+  const currentSection = stableCurrentSection || {
     title: t('common.loading'),
     id: 'loading',
   }
@@ -171,10 +183,10 @@ function ParallelReader() {
 
   // Initial load and reload when data source or section changes
   useEffect(() => {
-    if (displaySections && displaySections[currentSectionIndex]) {
-      loadVerses(displaySections[currentSectionIndex])
+    if (stableCurrentSection) {
+      loadVerses(stableCurrentSection)
     }
-  }, [currentSectionIndex, loadVerses, displaySections])
+  }, [loadVerses, stableCurrentSection])
 
   useEffect(() => {
     if (activeSection === 'read') {

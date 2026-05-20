@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { useSidebar } from '../contexts/SidebarContext'
 import { useTranslation } from 'react-i18next'
 import {
@@ -10,11 +12,23 @@ import {
   Search,
   Bookmark,
   Languages,
+  Loader2,
+  Check,
+  AlertCircle,
 } from 'lucide-react'
+import { selectImportState, resetImportState } from '../store'
 
 export default function Sidebar() {
-  const { isOpen, toggleSidebar, content, title } = useSidebar()
+  const { isOpen, toggleSidebar, content, title, openSidebar } = useSidebar()
   const { t, i18n } = useTranslation()
+  const dispatch = useDispatch()
+  const importState = useSelector(selectImportState)
+
+  useEffect(() => {
+    if (importState?.status === 'completed') {
+      openSidebar()
+    }
+  }, [importState?.status, openSidebar])
 
   const toggleLanguage = () => {
     const newLang = i18n.language.startsWith('en') ? 'pt' : 'en'
@@ -90,6 +104,59 @@ export default function Sidebar() {
           ${!isOpen && 'lg:hidden'}
         `}
         >
+          {/* Background Import Status Card */}
+          {importState && importState.status !== 'idle' && (
+            <div className={`
+              p-4 rounded-xl border mb-4 animate-in fade-in slide-in-from-top-2 duration-300
+              ${importState.status === 'loading' ? 'bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300' : ''}
+              ${importState.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300' : ''}
+              ${importState.status === 'failed' ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300' : ''}
+            `}>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2 font-semibold text-sm">
+                  {importState.status === 'loading' && <Loader2 size={16} className="animate-spin text-indigo-500 shrink-0" />}
+                  {importState.status === 'completed' && <Check size={16} className="text-emerald-500 shrink-0" />}
+                  {importState.status === 'failed' && <AlertCircle size={16} className="text-red-500 shrink-0" />}
+                  <span className="truncate">
+                    {importState.status === 'loading' && (t('import.processing') || 'Importing...')}
+                    {importState.status === 'completed' && (t('import.success_title') || 'Import Complete')}
+                    {importState.status === 'failed' && (t('import.error_title') || 'Import Failed')}
+                  </span>
+                </div>
+                {(importState.status === 'completed' || importState.status === 'failed') && (
+                  <button
+                    onClick={() => dispatch(resetImportState())}
+                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors ml-2 shrink-0"
+                  >
+                    <X size={14} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" />
+                  </button>
+                )}
+              </div>
+              
+              <div className="mt-2 text-xs leading-relaxed opacity-95">
+                {importState.status === 'loading' && (
+                  <div className="space-y-2">
+                    <p>
+                      {t('import.loaded_sections') || 'Loaded'} {importState.currentSection} / {importState.totalSections} {t('import.sections') || 'sections'}
+                    </p>
+                    <div className="w-full bg-indigo-200/50 dark:bg-indigo-950/50 rounded-full h-1.5 overflow-hidden">
+                      <div 
+                        className="bg-indigo-600 h-1.5 transition-all duration-300"
+                        style={{ width: `${(importState.currentSection / importState.totalSections) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {importState.status === 'completed' && (
+                  <p>{t('import.success_desc') || 'All verses have been successfully loaded and saved.'}</p>
+                )}
+                {importState.status === 'failed' && (
+                  <p>{importState.error || t('import.error_desc') || 'An error occurred during import.'}</p>
+                )}
+              </div>
+            </div>
+          )}
+
           {content ? (
             <div className="animate-in fade-in slide-in-from-left-2 duration-300">
               {content}

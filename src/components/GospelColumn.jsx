@@ -50,6 +50,11 @@ export default function GospelColumn({
 
   const config = gospelConfig[gospel]
 
+  const isPassageLoading =
+    loading || (typeof verses === 'string' && verses.trim() !== '')
+
+  const hasVerses = Array.isArray(verses) && verses.length > 0
+
   return (
     <div className={`gospel-column ${config.color} h-full`}>
       {/* Header */}
@@ -88,7 +93,7 @@ export default function GospelColumn({
 
       {/* Reference Header */}
       <div className="px-4 py-2 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 h-[37px] flex items-center">
-        {loading ? (
+        {isPassageLoading ? (
           <Skeleton className="h-4 w-32" />
         ) : reference ? (
           <div className="flex items-center gap-2 text-sm">
@@ -106,9 +111,9 @@ export default function GospelColumn({
 
       {/* Verses Content */}
       <div className="flex-1 overflow-y-auto scrollbar-thin p-3 sm:p-4">
-        {loading ? (
+        {isPassageLoading ? (
           <GospelColumnSkeleton />
-        ) : verses.length > 0 ? (
+        ) : hasVerses ? (
           <div className="space-y-3 sm:space-y-4">
             {verses.map((verse, index) => (
               <p

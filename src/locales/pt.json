@@ -56,7 +56,11 @@
     "success_title": "Importação concluída",
     "error_title": "Falha na importação",
     "expected_format": "Formato de Arquivo Esperado:",
-    "format_note": "* Use ponto e vírgula (;) ou novas linhas para separar múltiplos intervalos de versículos em uma mesma célula."
+    "format_note": "* Use ponto e vírgula (;) ou novas linhas para separar múltiplos intervalos de versículos em uma mesma célula.",
+    "loaded_sections": "Carregado",
+    "sections": "seções",
+    "success_desc": "Todos os versículos foram carregados e salvos com sucesso.",
+    "error_desc": "Ocorreu um erro durante a importação."
   },
   "app": {
     "current_session": "Sessão Atual",
