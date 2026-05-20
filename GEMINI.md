@@ -75,3 +75,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Use .agents/skills/caveman/SKILL.md
 - Use .agents/skills/web-artifacts-builder/SKILL.md
 - Use .agents/skills/afayc/SKILL.md
+
+# Components React
+
+- Think in breaking into smaller components
+- Each component should have a single responsibility
+- Use SOLID principles
