@@ -15,6 +15,23 @@ export const AuthProvider = ({ children }) => {
     setLoading(false)
   }, [])
 
+  // Refresh the auth token every hour
+  useEffect(() => {
+    if (!user) return
+
+    const REFRESH_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
+    const intervalId = setInterval(async () => {
+      try {
+        await authService.refreshToken()
+      } catch (err) {
+        console.error('Token refresh failed:', err)
+        logout()
+      }
+    }, REFRESH_INTERVAL_MS)
+
+    return () => clearInterval(intervalId)
+  }, [user])
+
   const login = async (username, password) => {
     const data = await authService.login(username, password)
     setUser(data.user)
