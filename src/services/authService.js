@@ -50,6 +50,18 @@ const authService = {
   },
 
   /**
+   * Refresh the current token
+   * @returns {object} { token }
+   */
+  async refreshToken() {
+    const response = await api.post('/api/auth/refresh')
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token)
+    }
+    return response.data
+  },
+
+  /**
    * Check if user is authenticated
    */
   isAuthenticated() {
