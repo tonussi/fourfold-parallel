@@ -56,7 +56,11 @@
     "success_title": "Import completed",
     "error_title": "Import failed",
     "expected_format": "Expected File Format:",
-    "format_note": "* Use semicolons (;) or new lines to separate multiple verse ranges in the same cell."
+    "format_note": "* Use semicolons (;) or new lines to separate multiple verse ranges in the same cell.",
+    "loaded_sections": "Loaded",
+    "sections": "sections",
+    "success_desc": "All verses have been successfully loaded and saved.",
+    "error_desc": "An error occurred during import."
   },
   "app": {
     "current_session": "Current Session",

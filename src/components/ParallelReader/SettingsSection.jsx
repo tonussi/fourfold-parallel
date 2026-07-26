@@ -10,6 +10,8 @@ import {
   setImportedData,
   setCurrentSectionIndex,
   purgePersistence,
+  startImport,
+  resetImportState,
 } from '@src/store'
 
 export default function SettingsSection() {
@@ -23,12 +25,13 @@ export default function SettingsSection() {
   )
 
   const handleImport = (data) => {
-    dispatch(setImportedData(data))
+    dispatch(startImport(data))
     dispatch(setCurrentSectionIndex(0))
   }
 
   const handleResetToDefault = () => {
     dispatch(setImportedData(null))
+    dispatch(resetImportState())
     dispatch(setCurrentSectionIndex(0))
   }
 
