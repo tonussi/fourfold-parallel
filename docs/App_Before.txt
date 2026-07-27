@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { useSidebar } from '@src/contexts/SidebarContext'
@@ -19,37 +19,7 @@ import {
   selectSelectedFont,
   setSelectedFont,
   selectImportedData,
-  cacheVerses,
 } from '@src/store'
-
-// Module-level cache to dedupe refs across re-renders within a session
-// (Redux cache is only written by the unused verses slice thunk)
-const inflight = new Map() // reference -> Promise
-const resultCache = new Map() // reference -> verses
-
-const buildRefKey = (segments, version) =>
-  `${version}::${segments
-    .map((s) => `${s.book}.${s.chapter}.${s.from}-${s.to}`)
-    .join('|')}`
-
-// Capped-concurrency runner (max 4 in flight)
-const runPool = async (items, limit, worker) => {
-  const results = new Array(items.length)
-  let next = 0
-  const launch = async () => {
-    while (true) {
-      const i = next++
-      if (i >= items.length) return
-      try {
-        results[i] = await worker(items[i], i)
-      } catch (e) {
-        results[i] = { __error: e }
-      }
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, launch))
-  return results
-}
 
 // Refactored helper functions, subcomponents, and constants
 import {
@@ -71,7 +41,6 @@ function ParallelReader() {
   const [sectionVerses, setSectionVerses] = useState({})
   const [isLoadingVerses, setIsLoadingVerses] = useState(false)
   const [highlightedWord, setHighlightedWord] = useState(null)
-  const loadAbortRef = useRef(null)
   const { setSidebarContent, setTitle } = useSidebar()
 
   const GOSPEL_CONFIG = useMemo(
@@ -155,105 +124,61 @@ function ParallelReader() {
       setSectionVerses({}) // Clear old verses
       const newVerses = {}
 
-      // Cancel any in-flight load for prior section via AbortController
-      loadAbortRef.current?.abort()
-      const controller = new AbortController()
-      loadAbortRef.current = controller
-
       try {
-        // Group passages by reference so passages with identical refs share a fetch
-        const refGroups = new Map() // refKey -> { segments, gospel, passageRef }
-        const segmentToGospel = new Map()
+        const segments = []
+        const passageMap = {} // Map book number to gospel name for easy assignment
 
-        for (const passage of section.passages) {
-          if (!passage.reference) continue
+        section.passages.forEach((passage) => {
+          if (!passage.reference) return
           const parsedList = parseReference(passage.reference)
-          if (!parsedList) continue
-          for (const parsed of parsedList) {
-            const segments = [{
+          if (!parsedList) return
+
+          parsedList.forEach((parsed) => {
+            segments.push({
               book: parsed.book,
               chapter: parsed.chapter,
               from: parsed.from,
               to: parsed.to,
               publisher: selectedVersion,
-            }]
-            const refKey = buildRefKey(segments, selectedVersion)
-            segmentToGospel.set(parsed.book, passage.gospel)
-            if (!refGroups.has(refKey)) {
-              refGroups.set(refKey, { segments, refKey, gospel: passage.gospel })
-            }
-          }
-        }
-
-        // Cap parallelism at 4 (one per gospel)
-        const refEntries = Array.from(refGroups.values())
-        const fetched = await runPool(refEntries, 4, async (entry) => {
-          if (controller.signal.aborted) throw new Error('aborted')
-          if (resultCache.has(entry.refKey)) {
-            return { refKey: entry.refKey, verses: resultCache.get(entry.refKey), gospel: entry.gospel }
-          }
-          if (inflight.has(entry.refKey)) {
-            const verses = await inflight.get(entry.refKey)
-            return { refKey: entry.refKey, verses, gospel: entry.gospel }
-          }
-          const p = fetchVerses(entry.segments, selectedVersion)
-            .then((data) => {
-              const versionVerses =
-                data[selectedVersion] ||
-                data.data?.[selectedVersion] ||
-                Object.values(data).find((val) => Array.isArray(val))
-              const result = (versionVerses && Array.isArray(versionVerses))
-                ? versionVerses.map((v) => ({
-                    verse: v.verse,
-                    text: v.scripture,
-                    book: v.book,
-                  }))
-                : []
-              resultCache.set(entry.refKey, result)
-              dispatch(cacheVerses({ reference: entry.refKey, data: { verses: result } }))
-              return result
             })
-            .finally(() => inflight.delete(entry.refKey))
-          inflight.set(entry.refKey, p)
-          const verses = await p
-          return { refKey: entry.refKey, verses, gospel: entry.gospel }
+
+            // Use the book number to map back to the passage gospel
+            // Matthew: 40, Mark: 41, Luke: 42, John: 43
+            passageMap[parsed.book] = passage.gospel
+          })
         })
 
-        if (controller.signal.aborted) return
+        if (segments.length > 0) {
+          const result = await fetchVerses(segments)
+          // The API returns results keyed by the publisher label
+          // Try specific version first, then fallback to first available array
+          const versionVerses =
+            result[selectedVersion] ||
+            result.data?.[selectedVersion] ||
+            Object.values(result).find((val) => Array.isArray(val))
 
-        // Map results back to gospels (each entry may contain multiple books)
-        for (const r of fetched) {
-          if (!r || r.__error) continue
-          const versesByBook = new Map()
-          for (const v of r.verses) {
-            const gospel = segmentToGospel.get(v.book)
-            if (!gospel) continue
-            if (!versesByBook.has(gospel)) versesByBook.set(gospel, [])
-            versesByBook.get(gospel).push({ verse: v.verse, text: v.text })
-          }
-          for (const [gospel, vs] of versesByBook) {
-            if (!newVerses[gospel]) newVerses[gospel] = []
-            newVerses[gospel].push(...vs)
+          if (versionVerses && Array.isArray(versionVerses)) {
+            // Group verses by their book number
+            versionVerses.forEach((v) => {
+              const gospel = passageMap[v.book]
+              if (gospel) {
+                if (!newVerses[gospel]) newVerses[gospel] = []
+                newVerses[gospel].push({
+                  verse: v.verse,
+                  text: v.scripture,
+                })
+              }
+            })
           }
         }
-
-        // Stable sort by verse number within each gospel
-        for (const gospel of Object.keys(newVerses)) {
-          newVerses[gospel].sort((a, b) => a.verse - b.verse)
-        }
-
         setSectionVerses(newVerses)
       } catch (error) {
-        if (error?.message !== 'aborted') {
-          console.error('Error loading section verses:', error)
-        }
+        console.error('Error loading section verses:', error)
       } finally {
-        if (!controller.signal.aborted) {
-          setIsLoadingVerses(false)
-        }
+        setIsLoadingVerses(false)
       }
     },
-    [selectedVersion, dispatch]
+    [selectedVersion]
   )
 
   // Initial load and reload when data source or section changes
