@@ -37,6 +37,7 @@
     "settings": "Settings"
   },
   "nav": {
+    "ai": "Ask",
     "previous": "Previous section",
     "next": "Next section",
     "passage": "Passage",

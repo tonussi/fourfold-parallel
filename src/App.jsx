@@ -61,6 +61,7 @@ import SearchSection from '@src/components/ParallelReader/SearchSection'
 import BookmarksSection from '@src/components/ParallelReader/BookmarksSection'
 import SettingsSection from '@src/components/ParallelReader/SettingsSection'
 import Footer from '@src/components/ParallelReader/Footer'
+import AIModal from '@src/components/ParallelReader/AIModal'
 import './App.css'
 
 function ParallelReader() {
@@ -71,6 +72,7 @@ function ParallelReader() {
   const [sectionVerses, setSectionVerses] = useState({})
   const [isLoadingVerses, setIsLoadingVerses] = useState(false)
   const [highlightedWord, setHighlightedWord] = useState(null)
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false)
   const loadAbortRef = useRef(null)
   const { setSidebarContent, setTitle } = useSidebar()
 
@@ -394,6 +396,7 @@ function ParallelReader() {
         versions={BibleVersionEnum}
         selectedFont={selectedFont}
         onFontChange={(f) => dispatch(setSelectedFont(f))}
+        onOpenAI={() => setIsAIModalOpen(true)}
       />
 
       <main className="flex-1 overflow-hidden">
@@ -431,6 +434,12 @@ function ParallelReader() {
       <Footer
         displayDataTitle={displayData.title}
         sectionsCount={displaySections?.length}
+      />
+
+      <AIModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        currentSection={mergedCurrentSection}
       />
     </>
   )

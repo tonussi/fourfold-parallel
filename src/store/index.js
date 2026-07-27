@@ -10,6 +10,7 @@ import {
   REGISTER,
 } from 'redux-persist'
 import storage from 'redux-persist/es/storage/session' // Use sessionStorage
+import localStorageEngine from 'redux-persist/es/storage' // localStorage (key 'fourfold-ai-root')
 
 import versesReducer, {
   addToHistory,
@@ -36,37 +37,57 @@ import configReducer, {
   failImport,
   resetImportState,
 } from './configSlice'
+import aiReducer, {
+  addProvider,
+  removeProvider,
+  setActiveProvider,
+  addPrompt,
+  removePrompt,
+  setActivePrompt,
+  resetAI,
+} from './aiSlice'
 
-// Redux persist configuration for session storage
-const persistConfig = {
-  key: 'fourfold-gospel-root',
+// Persist config for verses slice (sessionStorage)
+const versesPersistConfig = {
+  key: 'fourfold-verses-root',
   version: 1,
-  storage, // Uses sessionStorage
-  // Only persist these keys
+  storage,
+  whitelist: ['bookmarks', 'readingHistory', 'currentReference'],
+}
+
+// Persist config for config slice (sessionStorage)
+const configPersistConfig = {
+  key: 'fourfold-config-root',
+  version: 1,
+  storage,
   whitelist: [
-    'bookmarks',
-    'readingHistory',
     'preferredVersion',
     'darkMode',
     'currentSectionIndex',
-    'config',
   ],
-  // Don't persist these keys (transient data)
-  // blacklist: ['loading', 'error', 'searchResults', 'cachedVerses'],
 }
+
+// AI slice persists to localStorage (separate key from sessionStorage slices)
+const aiPersistConfig = {
+  key: 'fourfold-ai-root',
+  version: 1,
+  storage: localStorageEngine,
+}
+
+const persistedVersesReducer = persistReducer(versesPersistConfig, versesReducer)
+const persistedConfigReducer = persistReducer(configPersistConfig, configReducer)
+const persistedAiReducer = persistReducer(aiPersistConfig, aiReducer)
 
 // Combine reducers (can add more slices here)
 const rootReducer = combineReducers({
-  verses: versesReducer,
-  config: configReducer,
+  verses: persistedVersesReducer,
+  config: persistedConfigReducer,
+  ai: persistedAiReducer,
 })
-
-// Create persisted reducer
-const persistedReducer = persistReducer(persistConfig, rootReducer)
 
 // Configure store
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
@@ -97,6 +118,16 @@ export const selectSelectedFont = (state) => state.config.selectedFont
 export const selectImportedData = (state) => state.config.importedData
 export const selectImportState = (state) => state.config.importState
 
+// AI selectors
+export {
+  selectProviders,
+  selectPrompts,
+  selectActiveProviderId,
+  selectActivePromptId,
+  selectActiveProvider,
+  selectActivePrompt,
+} from './aiSlice'
+
 // Check if a verse is bookmarked
 export const selectIsBookmarked = (reference, version) => (state) => {
   return state.verses.bookmarks.some(
@@ -126,6 +157,13 @@ export {
   completeImport,
   failImport,
   resetImportState,
+  addProvider,
+  removeProvider,
+  setActiveProvider,
+  addPrompt,
+  removePrompt,
+  setActivePrompt,
+  resetAI,
 }
 
 // Flush persistence (useful for logout)
