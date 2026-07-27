@@ -30,8 +30,8 @@ export const EXAMPLES = [
     tooltip: 'https://youtu.be/_ReZquQoyOYs',
   },
   {
-    name: 'Parallel Reading (Full - Beta Version)',
-    file: 'ParallelReading-Full-BetaVersion.csv',
+    name: 'Parallel Reading (Full - Alpha Version)',
+    file: 'ParallelReading-Full-AlphaVersion.csv',
     type: 'CSV',
     tooltip: 'http://www.parallelgospels.net/',
   },
