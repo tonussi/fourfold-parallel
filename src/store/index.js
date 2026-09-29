@@ -44,6 +44,7 @@ import aiReducer, {
   addPrompt,
   removePrompt,
   setActivePrompt,
+  setActiveLanguage,
   resetAI,
 } from './aiSlice'
 
@@ -126,6 +127,8 @@ export {
   selectActivePromptId,
   selectActiveProvider,
   selectActivePrompt,
+  selectActiveLanguage,
+  OUTPUT_LANGUAGES,
 } from './aiSlice'
 
 // Check if a verse is bookmarked
@@ -163,6 +166,7 @@ export {
   addPrompt,
   removePrompt,
   setActivePrompt,
+  setActiveLanguage,
   resetAI,
 }
 

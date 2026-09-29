@@ -18,8 +18,11 @@ import {
   selectActivePromptId,
   selectActiveProvider,
   selectActivePrompt,
+  selectActiveLanguage,
+  OUTPUT_LANGUAGES,
   setActiveProvider,
   setActivePrompt,
+  setActiveLanguage,
   addPrompt,
   removePrompt,
   addProvider,
@@ -53,10 +56,11 @@ function buildSectionText(section) {
     .join('\n\n')
 }
 
-function buildPayload(prompt, section) {
+function buildPayload(prompt, section, language) {
+  const instruction = `${prompt}\n\nAnswer in ${language.name}.`
   const sectionText = buildSectionText(section)
-  if (!sectionText) return prompt
-  return `${prompt}\n\n--- Verses ---\n\n${sectionText}`
+  if (!sectionText) return instruction
+  return `${instruction}\n\n--- Verses ---\n\n${sectionText}`
 }
 
 export default function AIModal({ isOpen, onClose, currentSection }) {
@@ -67,6 +71,7 @@ export default function AIModal({ isOpen, onClose, currentSection }) {
   const activePromptId = useSelector(selectActivePromptId)
   const activeProvider = useSelector(selectActiveProvider)
   const activePrompt = useSelector(selectActivePrompt)
+  const activeLanguage = useSelector(selectActiveLanguage)
 
   const [promptText, setPromptText] = useState('')
   const [newProviderName, setNewProviderName] = useState('')
@@ -91,12 +96,8 @@ export default function AIModal({ isOpen, onClose, currentSection }) {
   }, [status])
 
   const payload = useMemo(
-    () => buildPayload(promptText, currentSection),
-    [promptText, currentSection]
-  )
-
-  const hasVerses = (currentSection?.passages || []).some(
-    (p) => p.verses && p.verses.length > 0
+    () => buildPayload(promptText, currentSection, activeLanguage),
+    [promptText, currentSection, activeLanguage]
   )
 
   if (!isOpen) return null
@@ -308,6 +309,24 @@ export default function AIModal({ isOpen, onClose, currentSection }) {
                   </button>
                 )}
             </div>
+          </div>
+
+          {/* Output language dropdown */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              Output Language
+            </label>
+            <select
+              value={activeLanguage.id}
+              onChange={(e) => dispatch(setActiveLanguage(e.target.value))}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+            >
+              {OUTPUT_LANGUAGES.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Editable prompt */}
