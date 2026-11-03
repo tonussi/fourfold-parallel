@@ -20,7 +20,8 @@
     "mark": "Marcos",
     "luke": "Lucas",
     "john": "João",
-    "dismiss": "Ignorar"
+    "dismiss": "Ignorar",
+    "close": "Fechar"
   },
   "settings": {
     "danger_zone": "Zona de Perigo",
@@ -41,6 +42,10 @@
     "next": "Próxima seção",
     "passage": "Passagem",
     "font": "Fonte",
+    "alignment": "Alinhar",
+    "text_alignment": "Alinhamento do texto",
+    "align_left": "Alinhar à esquerda",
+    "align_justify": "Justificar texto",
     "version": "Versão",
     "go_to_section": "Ir para seção {{index}}"
   },
@@ -60,14 +65,20 @@
     "loaded_sections": "Carregado",
     "sections": "seções",
     "success_desc": "Todos os versículos foram carregados e salvos com sucesso.",
-    "error_desc": "Ocorreu um erro durante a importação."
+    "error_desc": "Ocorreu um erro durante a importação.",
+    "example_confirm_title": "Carregar arquivo sugerido?",
+    "example_confirm_description": "Você deseja carregar o arquivo \"{{name}}\"? Ele será importado automaticamente.",
+    "example_confirm_action": "Sim, carregar",
+    "example_load_error": "Não foi possível carregar o arquivo sugerido."
   },
   "app": {
     "current_session": "Sessão Atual",
     "source": "Fonte",
     "word_sequences": "Sequências de palavras",
     "examples_title": "Modelos e Exemplos",
-    "examples_description": "Baixe estes exemplos para ver como formatar seus próprios arquivos CSV para importação.",
+    "examples_description": "Use um destes modelos de leitura paralela ou baixe o CSV para consulta.",
+    "tap_to_load": "Toque para carregar",
+    "open_example": "Abrir modelo {{name}}",
     "restore_default": "Restaurar Padrão",
     "sections_count": "{{count}} Seções",
     "open_search": "Abrir Página de Busca",
@@ -119,7 +130,18 @@
     "active_verses": "Versículos Ativos",
     "loading_stats": "Carregando estatísticas...",
     "translation": "Tradução:",
-    "compare_translation": "Comparar com tradução"
+    "compare_translation": "Comparar com tradução",
+    "aligned_comparison": "Comparação grega alinhada",
+    "aligned_comparison_description": "Correspondências, substituições, movimentos e palavras exclusivas alinhadas na ordem do texto.",
+    "alignment_legend": "Legenda do alinhamento",
+    "alignment_unavailable": "O alinhamento precisa de uma passagem nos dois evangelhos selecionados.",
+    "alignment_types": {
+      "match": "Iguais",
+      "substitution": "Substituídas",
+      "omission": "Só à esquerda",
+      "addition": "Só à direita",
+      "movement": "Movidas"
+    }
   },
   "gospels": {
     "matthew_subtitle": "O Rei",
@@ -128,6 +150,8 @@
     "john_subtitle": "O Filho de Deus",
     "no_parallel": "Sem passagem paralela",
     "not_recorded": "Este evento não está registrado em {{title}}",
+    "load_failed": "Não foi possível carregar esta passagem",
+    "retry": "Tentar novamente",
     "prev_gospel": "Evangelho anterior",
     "next_gospel": "Próximo evangelho",
     "swipe_hint": "← Deslize para navegar →",

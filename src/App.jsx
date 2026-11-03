@@ -7,6 +7,7 @@ import SectionNav from '@src/components/SectionNav'
 import { SidebarCard } from '@src/components/Sidebar'
 import StatisticsPage from '@src/pages/Statistics/StatisticsPage'
 import { parseReference, fetchVerses, BibleVersionEnum } from '@src/verses'
+import { retry } from '@src/utils/retry'
 import { BookOpen, FileText, Download, BarChart3 } from 'lucide-react'
 import parallelData from '@src/data/parallelVerses.json'
 import {
@@ -18,6 +19,8 @@ import {
   setActiveGospelTab,
   selectSelectedFont,
   setSelectedFont,
+  selectTextAlignment,
+  setTextAlignment,
   selectImportedData,
   cacheVerses,
 } from '@src/store'
@@ -26,6 +29,7 @@ import {
 // (Redux cache is only written by the unused verses slice thunk)
 const inflight = new Map() // reference -> Promise
 const resultCache = new Map() // reference -> verses
+const FETCH_ATTEMPTS = 3
 
 const buildRefKey = (segments, version) =>
   `${version}::${segments
@@ -70,7 +74,8 @@ function ParallelReader() {
   const [activeSection, setActiveSection] = useState('read')
   const [isMobile, setIsMobile] = useState(false)
   const [sectionVerses, setSectionVerses] = useState({})
-  const [isLoadingVerses, setIsLoadingVerses] = useState(false)
+  const [isLoadingVerses, setIsLoadingVerses] = useState(true)
+  const [loadFailed, setLoadFailed] = useState(false)
   const [highlightedWord, setHighlightedWord] = useState(null)
   const [isAIModalOpen, setIsAIModalOpen] = useState(false)
   const loadAbortRef = useRef(null)
@@ -103,6 +108,7 @@ function ParallelReader() {
   const currentSectionIndex = useSelector(selectCurrentSectionIndex)
   const activeGospelTab = useSelector(selectActiveGospelTab)
   const selectedFont = useSelector(selectSelectedFont)
+  const textAlignment = useSelector(selectTextAlignment)
   const importedData = useSelector(selectImportedData)
 
   // Update verse font CSS variable when selected font changes
@@ -145,15 +151,23 @@ function ParallelReader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSectionKey])
 
-  const currentSection = stableCurrentSection || {
-    title: t('common.loading'),
-    id: 'loading',
-  }
+  const currentSection = useMemo(
+    () =>
+      stableCurrentSection || {
+        title: t('common.loading'),
+        id: 'loading',
+      },
+    [stableCurrentSection, t]
+  )
 
   const loadVerses = useCallback(
     async (section) => {
-      if (!section?.passages) return
+      if (!section?.passages) {
+        setIsLoadingVerses(false)
+        return
+      }
       setIsLoadingVerses(true)
+      setLoadFailed(false)
       setSectionVerses({}) // Clear old verses
       const newVerses = {}
 
@@ -198,7 +212,10 @@ function ParallelReader() {
             const verses = await inflight.get(entry.refKey)
             return { refKey: entry.refKey, verses, gospel: entry.gospel }
           }
-          const p = fetchVerses(entry.segments, selectedVersion)
+          const p = retry(
+            () => fetchVerses(entry.segments, selectedVersion),
+            FETCH_ATTEMPTS
+          )
             .then((data) => {
               const versionVerses =
                 data[selectedVersion] ||
@@ -211,8 +228,10 @@ function ParallelReader() {
                     book: v.book,
                   }))
                 : []
-              resultCache.set(entry.refKey, result)
-              dispatch(cacheVerses({ reference: entry.refKey, data: { verses: result } }))
+              if (result.length > 0) {
+                resultCache.set(entry.refKey, result)
+                dispatch(cacheVerses({ reference: entry.refKey, data: { verses: result } }))
+              }
               return result
             })
             .finally(() => inflight.delete(entry.refKey))
@@ -222,6 +241,8 @@ function ParallelReader() {
         })
 
         if (controller.signal.aborted) return
+
+        setLoadFailed(fetched.some((r) => r?.__error))
 
         // Map results back to gospels (each entry may contain multiple books)
         for (const r of fetched) {
@@ -248,6 +269,7 @@ function ParallelReader() {
       } catch (error) {
         if (error?.message !== 'aborted') {
           console.error('Error loading section verses:', error)
+          setLoadFailed(true)
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -260,9 +282,13 @@ function ParallelReader() {
 
   // Initial load and reload when data source or section changes
   useEffect(() => {
-    if (stableCurrentSection) {
-      loadVerses(stableCurrentSection)
-    }
+    if (!stableCurrentSection) return undefined
+
+    const loadTimer = window.setTimeout(
+      () => loadVerses(stableCurrentSection),
+      0
+    )
+    return () => window.clearTimeout(loadTimer)
   }, [loadVerses, stableCurrentSection])
 
   useEffect(() => {
@@ -314,13 +340,19 @@ function ParallelReader() {
       setTitle(t('common.read'))
       setSidebarContent(null)
     }
-  }, [activeSection, currentSectionIndex, displayData?.title, t])
+  }, [
+    activeSection,
+    currentSection?.title,
+    displayData?.title,
+    setSidebarContent,
+    setTitle,
+    t,
+  ])
 
   const handlePrev = () => {
     if (currentSectionIndex > 0) {
       const nextIdx = currentSectionIndex - 1
       dispatch(setCurrentSectionIndex(nextIdx))
-      loadVerses(displaySections[nextIdx])
     }
   }
 
@@ -328,7 +360,6 @@ function ParallelReader() {
     if (currentSectionIndex < displaySections.length - 1) {
       const nextIdx = currentSectionIndex + 1
       dispatch(setCurrentSectionIndex(nextIdx))
-      loadVerses(displaySections[nextIdx])
     }
   }
 
@@ -382,7 +413,6 @@ function ParallelReader() {
       <Header
         activeSection={activeSection}
         onSectionChange={setActiveSection}
-        sections={displaySections}
       />
 
       <SectionNav
@@ -396,6 +426,10 @@ function ParallelReader() {
         versions={BibleVersionEnum}
         selectedFont={selectedFont}
         onFontChange={(f) => dispatch(setSelectedFont(f))}
+        textAlignment={textAlignment}
+        onTextAlignmentChange={(alignment) =>
+          dispatch(setTextAlignment(alignment))
+        }
         onOpenAI={() => setIsAIModalOpen(true)}
       />
 
@@ -419,7 +453,10 @@ function ParallelReader() {
               getPassageForGospel={getPassageForGospel}
               highlightedWord={highlightedWord}
               onWordClick={setHighlightedWord}
+              textAlignment={textAlignment}
               loading={isLoadingVerses}
+              loadFailed={loadFailed}
+              onRetry={() => loadVerses(stableCurrentSection)}
             />
           </div>
         )}

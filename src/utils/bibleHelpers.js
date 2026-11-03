@@ -25,7 +25,7 @@ export const EXAMPLES = [
   },
   {
     name: 'CJ Cornthwaite',
-    file: 'CJCornthwaite.csv',
+    file: 'Comparisson-CJCornthwaite.csv',
     type: 'CSV',
     tooltip: 'https://youtu.be/_ReZquQoyOYs',
   },

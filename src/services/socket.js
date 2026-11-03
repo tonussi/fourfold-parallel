@@ -13,6 +13,7 @@ function getSocketUrl() {
 /** Singleton socket instance — auto-connects on import. */
 const socket = io(getSocketUrl(), {
   autoConnect: true,
+  auth: (sendAuth) => sendAuth({ token: localStorage.getItem('token') }),
   reconnection: true,
   reconnectionDelay: 1000,
   reconnectionAttempts: Infinity,

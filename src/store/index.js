@@ -30,6 +30,7 @@ import configReducer, {
   setCurrentSectionIndex,
   setActiveGospelTab,
   setSelectedFont,
+  setTextAlignment,
   setImportedData,
   startImport,
   updateImportProgress,
@@ -65,6 +66,7 @@ const configPersistConfig = {
     'preferredVersion',
     'darkMode',
     'currentSectionIndex',
+    'textAlignment',
   ],
 }
 
@@ -116,6 +118,7 @@ export const selectCurrentSectionIndex = (state) =>
   state.config.currentSectionIndex
 export const selectActiveGospelTab = (state) => state.config.activeGospelTab
 export const selectSelectedFont = (state) => state.config.selectedFont
+export const selectTextAlignment = (state) => state.config.textAlignment
 export const selectImportedData = (state) => state.config.importedData
 export const selectImportState = (state) => state.config.importState
 
@@ -154,6 +157,7 @@ export {
   setCurrentSectionIndex,
   setActiveGospelTab,
   setSelectedFont,
+  setTextAlignment,
   setImportedData,
   startImport,
   updateImportProgress,

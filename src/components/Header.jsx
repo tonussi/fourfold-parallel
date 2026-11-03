@@ -1,4 +1,4 @@
-import { useTheme } from '../contexts/ThemeContext'
+import useTheme from '../contexts/useTheme'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -18,7 +18,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useState } from 'react'
 import LoginModal from './LoginModal'
 
-export default function Header({ activeSection, onSectionChange, sections }) {
+export default function Header({ activeSection, onSectionChange }) {
   const { isDark, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const { t } = useTranslation()

@@ -7,6 +7,7 @@ const initialState = {
   currentSectionIndex: 0,
   activeGospelTab: 'matthew',
   selectedFont: 'serif',
+  textAlignment: 'left',
   importedData: null,
   importState: {
     status: 'idle', // 'idle' | 'loading' | 'completed' | 'failed'
@@ -40,6 +41,9 @@ const configSlice = createSlice({
     },
     setSelectedFont: (state, action) => {
       state.selectedFont = action.payload
+    },
+    setTextAlignment: (state, action) => {
+      state.textAlignment = action.payload
     },
     setImportedData: (state, action) => {
       state.importedData = action.payload
@@ -85,6 +89,7 @@ export const selectCurrentSectionIndex = (state) =>
   state.config.currentSectionIndex
 export const selectActiveGospelTab = (state) => state.config.activeGospelTab
 export const selectSelectedFont = (state) => state.config.selectedFont
+export const selectTextAlignment = (state) => state.config.textAlignment
 export const selectImportedData = (state) => state.config.importedData
 export const selectImportState = (state) => state.config.importState
 
@@ -96,6 +101,7 @@ export const {
   setCurrentSectionIndex,
   setActiveGospelTab,
   setSelectedFont,
+  setTextAlignment,
   setImportedData,
   startImport,
   updateImportProgress,

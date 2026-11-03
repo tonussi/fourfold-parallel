@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, ChevronRight, List, Type, Sparkles } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Type, Sparkles } from 'lucide-react'
+import TextAlignmentToggle from './TextAlignmentToggle'
 
 const FONTS = [
   { id: 'dejavu', name: 'DejaVu' },
@@ -20,13 +20,11 @@ export default function SectionNav({
   versions,
   selectedFont,
   onFontChange,
+  textAlignment,
+  onTextAlignmentChange,
   onOpenAI,
 }) {
   const { t } = useTranslation()
-  const currentSection = sections[currentIndex] || {
-    title: t('common.loading'),
-    id: 'loading',
-  }
 
   return (
     <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
@@ -100,8 +98,8 @@ export default function SectionNav({
           )}
         </div>
 
-        {/* Row 2: Secondary Controls (Font and Version) */}
-        <div className="flex items-center justify-center gap-4 px-3 py-2 border-t border-slate-100 dark:border-slate-800/50 mt-2">
+        {/* Row 2: Secondary Controls (Font, Version and Alignment) */}
+        <div className="flex items-end justify-center gap-3 px-3 py-2 border-t border-slate-100 dark:border-slate-800/50 mt-2">
           {/* Font Selector */}
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
@@ -127,6 +125,16 @@ export default function SectionNav({
                 <Type size={12} />
               </div>
             </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
+              {t('nav.alignment')}
+            </span>
+            <TextAlignmentToggle
+              value={textAlignment}
+              onChange={onTextAlignmentChange}
+            />
           </div>
 
           {/* Version Selector */}
@@ -290,6 +298,16 @@ export default function SectionNav({
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+                  {t('nav.alignment')}
+                </span>
+                <TextAlignmentToggle
+                  value={textAlignment}
+                  onChange={onTextAlignmentChange}
+                />
               </div>
             </div>
           </div>

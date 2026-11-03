@@ -1,9 +1,14 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import { Download } from 'lucide-react'
+import { Download, FileUp } from 'lucide-react'
 import FileImport from '@src/components/FileImport'
+import ConfirmExampleImportDialog from '@src/components/ConfirmExampleImportDialog'
 import { EXAMPLES, transformData } from '@src/utils/bibleHelpers'
+import {
+  isSmartphoneViewport,
+  loadExampleData,
+} from '@src/utils/exampleImport'
 import parallelData from '@src/data/parallelVerses.json'
 import {
   selectImportedData,
@@ -18,6 +23,9 @@ export default function SettingsSection() {
   const { t } = useTranslation()
   const dispatch = useDispatch()
   const importedData = useSelector(selectImportedData)
+  const [pendingExample, setPendingExample] = useState(null)
+  const [exampleLoading, setExampleLoading] = useState(false)
+  const [exampleError, setExampleError] = useState(null)
 
   const displayData = useMemo(
     () => importedData || transformData(parallelData),
@@ -58,6 +66,38 @@ export default function SettingsSection() {
     document.body.removeChild(link)
   }
 
+  const handleExampleClick = (example) => {
+    if (!isSmartphoneViewport()) {
+      handleDownloadExample(example.file)
+      return
+    }
+
+    setExampleError(null)
+    setPendingExample(example)
+  }
+
+  const closeExampleDialog = () => {
+    if (exampleLoading) return
+    setPendingExample(null)
+    setExampleError(null)
+  }
+
+  const confirmExampleImport = async () => {
+    if (!pendingExample || exampleLoading) return
+
+    setExampleLoading(true)
+    setExampleError(null)
+    try {
+      handleImport(await loadExampleData(pendingExample))
+      setPendingExample(null)
+    } catch (error) {
+      console.error('Unable to load suggested file:', error)
+      setExampleError(t('import.example_load_error'))
+    } finally {
+      setExampleLoading(false)
+    }
+  }
+
   return (
     <div className="h-[calc(100vh-220px)] md:h-[calc(100vh-200px)] overflow-y-auto p-4 lg:p-6 mb-16 md:mb-0">
       <div className="max-w-2xl mx-auto space-y-6">
@@ -69,7 +109,12 @@ export default function SettingsSection() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600">
-              <Download size={20} />
+              <FileUp size={20} className="sm:hidden" aria-hidden="true" />
+              <Download
+                size={20}
+                className="hidden sm:block"
+                aria-hidden="true"
+              />
             </div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
               {t('app.examples_title')}
@@ -82,9 +127,10 @@ export default function SettingsSection() {
             {EXAMPLES.map((example) => (
               <button
                 key={example.file}
-                onClick={() => handleDownloadExample(example.file)}
+                onClick={() => handleExampleClick(example)}
                 className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 transition-all text-left group"
                 title={example.tooltip}
+                aria-label={t('app.open_example', { name: example.name })}
               >
                 <div className="text-left flex-1 min-w-0 mr-4">
                   <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
@@ -100,10 +146,19 @@ export default function SettingsSection() {
                       </span>
                     )}
                   </div>
+                  <p className="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 sm:hidden">
+                    {t('app.tap_to_load')}
+                  </p>
                 </div>
+                <FileUp
+                  size={18}
+                  className="shrink-0 text-indigo-500 sm:hidden"
+                  aria-hidden="true"
+                />
                 <Download
                   size={16}
-                  className="text-slate-400 group-hover:text-indigo-500 transition-colors shrink-0"
+                  className="hidden shrink-0 text-slate-400 transition-colors group-hover:text-indigo-500 sm:block"
+                  aria-hidden="true"
                 />
               </button>
             ))}
@@ -153,6 +208,13 @@ export default function SettingsSection() {
           </button>
         </div>
       </div>
+      <ConfirmExampleImportDialog
+        example={pendingExample}
+        loading={exampleLoading}
+        error={exampleError}
+        onConfirm={confirmExampleImport}
+        onClose={closeExampleDialog}
+      />
     </div>
   )
 }

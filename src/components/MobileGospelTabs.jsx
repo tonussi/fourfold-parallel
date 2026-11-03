@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import VerseText from './VerseText'
 import { Skeleton, GospelColumnSkeleton } from './Skeleton'
+import LoadFailedNotice from './LoadFailedNotice'
 
 export default function MobileGospelTabs({
   gospels,
@@ -13,7 +14,10 @@ export default function MobileGospelTabs({
   getPassageForGospel,
   highlightedWord,
   onWordClick,
+  textAlignment = 'left',
   loading = false,
+  loadFailed = false,
+  onRetry,
 }) {
   const { t } = useTranslation()
   const [touchStart, setTouchStart] = useState(null)
@@ -119,9 +123,6 @@ export default function MobileGospelTabs({
 
   const passage = getPassageForGospel(activeTab)
   const config = GOSPEL_CONFIG[activeTab]
-
-  const isPassageLoading =
-    loading || (typeof passage?.verses === 'string' && passage.verses.trim() !== '')
 
   const hasVerses = Array.isArray(passage?.verses) && passage.verses.length > 0
 
@@ -250,7 +251,7 @@ export default function MobileGospelTabs({
 
           {/* Reference Badge */}
           <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 h-[37px] flex items-center">
-            {isPassageLoading ? (
+            {loading ? (
               <Skeleton className="h-4 w-32 rounded-full" />
             ) : passage.reference ? (
               <span
@@ -272,14 +273,18 @@ export default function MobileGospelTabs({
 
           {/* Scripture Content */}
           <div className="p-4">
-            {isPassageLoading ? (
+            {loading ? (
               <GospelColumnSkeleton />
+            ) : loadFailed && !hasVerses ? (
+              <LoadFailedNotice onRetry={onRetry} />
             ) : hasVerses ? (
               <div className="space-y-4">
-                {passage.verses.map((verse, index) => (
+                {passage.verses.map((verse) => (
                   <p
                     key={verse.verse}
-                    className="leading-[1.8] text-[15px] text-slate-800 dark:text-slate-200"
+                    className={`leading-[1.8] text-[15px] text-slate-800 dark:text-slate-200 ${
+                      textAlignment === 'justify' ? 'text-justify' : 'text-left'
+                    }`}
                   >
                     <span
                       className={`

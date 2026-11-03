@@ -1,46 +1,46 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import ThemeContext from './theme-context'
+const THEME_STORAGE_KEY = 'theme'
+const DARK_THEME = 'dark'
+const LIGHT_THEME = 'light'
 
-const ThemeContext = createContext(null)
+const getInitialTheme = () => {
+  if (typeof window === 'undefined') return LIGHT_THEME
+
+  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY)
+  if (savedTheme === DARK_THEME || savedTheme === LIGHT_THEME) {
+    return savedTheme
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? DARK_THEME
+    : LIGHT_THEME
+}
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('theme')
-      if (saved) return saved
-      return window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
-    }
-    return 'light'
-  })
+  const [theme, setTheme] = useState(getInitialTheme)
 
   useEffect(() => {
     const root = document.documentElement
-    if (theme === 'dark') {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
-    }
-    localStorage.setItem('theme', theme)
+    const isDark = theme === DARK_THEME
+
+    root.classList.toggle(DARK_THEME, isDark)
+    root.dataset.theme = theme
+    root.style.colorScheme = theme
+    localStorage.setItem(THEME_STORAGE_KEY, theme)
   }, [theme])
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
+    setTheme((currentTheme) =>
+      currentTheme === LIGHT_THEME ? DARK_THEME : LIGHT_THEME
+    )
   }
 
   return (
     <ThemeContext.Provider
-      value={{ theme, toggleTheme, isDark: theme === 'dark' }}
+      value={{ theme, toggleTheme, isDark: theme === DARK_THEME }}
     >
       {children}
     </ThemeContext.Provider>
   )
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext)
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider')
-  }
-  return context
 }

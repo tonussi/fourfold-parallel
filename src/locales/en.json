@@ -20,7 +20,8 @@
     "mark": "Mark",
     "luke": "Luke",
     "john": "John",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "close": "Close"
   },
   "settings": {
     "danger_zone": "Danger Zone",
@@ -42,6 +43,10 @@
     "next": "Next section",
     "passage": "Passage",
     "font": "Font",
+    "alignment": "Align",
+    "text_alignment": "Text alignment",
+    "align_left": "Align left",
+    "align_justify": "Justify text",
     "version": "Version",
     "go_to_section": "Go to section {{index}}"
   },
@@ -61,14 +66,20 @@
     "loaded_sections": "Loaded",
     "sections": "sections",
     "success_desc": "All verses have been successfully loaded and saved.",
-    "error_desc": "An error occurred during import."
+    "error_desc": "An error occurred during import.",
+    "example_confirm_title": "Load suggested file?",
+    "example_confirm_description": "Would you like to load \"{{name}}\"? It will be imported automatically.",
+    "example_confirm_action": "Yes, load",
+    "example_load_error": "The suggested file could not be loaded."
   },
   "app": {
     "current_session": "Current Session",
     "source": "Source",
     "word_sequences": "Word sequences",
     "examples_title": "Templates and Examples",
-    "examples_description": "Download these examples to see how to format your own CSV files for import.",
+    "examples_description": "Use one of these parallel reading templates or download its CSV for reference.",
+    "tap_to_load": "Tap to load",
+    "open_example": "Open template {{name}}",
     "restore_default": "Restore Default",
     "sections_count": "{{count}} Sections",
     "open_search": "Open Search Page",
@@ -121,7 +132,18 @@
     "active_verses": "Active Verses",
     "loading_stats": "Loading statistics...",
     "translation": "Translation:",
-    "compare_translation": "Compare with translation"
+    "compare_translation": "Compare with translation",
+    "aligned_comparison": "Aligned Greek comparison",
+    "aligned_comparison_description": "Matches, substitutions, movements, and unique words aligned in textual order.",
+    "alignment_legend": "Alignment legend",
+    "alignment_unavailable": "Alignment requires a passage in both selected gospels.",
+    "alignment_types": {
+      "match": "Matches",
+      "substitution": "Substitutions",
+      "omission": "Left only",
+      "addition": "Right only",
+      "movement": "Moved"
+    }
   },
   "gospels": {
     "matthew_subtitle": "The King",
@@ -130,6 +152,8 @@
     "john_subtitle": "The Son of God",
     "no_parallel": "No parallel passage",
     "not_recorded": "This event is not recorded in {{title}}",
+    "load_failed": "Could not load this passage",
+    "retry": "Try again",
     "prev_gospel": "Previous gospel",
     "next_gospel": "Next gospel",
     "swipe_hint": "← Swipe to navigate →",

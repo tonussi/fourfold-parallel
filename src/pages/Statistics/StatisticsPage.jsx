@@ -1,5 +1,5 @@
 // StatisticsPage - Full page for word sequence statistics
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   useStatisticsWorker,
@@ -12,14 +12,13 @@ import {
   ArrowLeft,
   BookOpen,
   RefreshCw,
-  ChevronDown,
   Languages,
-  ArrowRight,
 } from 'lucide-react'
 import { BibleVersionEnum, fetchVerses } from '../../verses'
-import api from '../../services/api'
+import AlignedTextComparison from '../../components/Statistics/AlignedTextComparison'
 
-function StatCard({ icon: Icon, label, value, subValue, color = 'indigo' }) {
+function StatCard({ icon, label, value, subValue, color = 'indigo' }) {
+  const IconComponent = icon
   const colorClasses = {
     indigo:
       'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400',
@@ -35,7 +34,7 @@ function StatCard({ icon: Icon, label, value, subValue, color = 'indigo' }) {
   return (
     <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
       <div className={`p-2.5 rounded-lg ${colorClasses[color]}`}>
-        <Icon size={20} />
+        <IconComponent size={20} />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
@@ -98,7 +97,8 @@ function PairComparison({ stats, selectedPair, onSelectPair }) {
                   {data.totalWords} {t('stats.words')}
                 </span>
                 <span className="text-emerald-600 dark:text-emerald-400">
-                  {data.matchPercentage}%
+                  {data.matchPercentage?.[g1] || '0.0'}% /{' '}
+                  {data.matchPercentage?.[g2] || '0.0'}%
                 </span>
               </div>
             </button>
@@ -142,20 +142,21 @@ function SequencesList({
         {top.map((seq, idx) => {
           const formatted = formatSequenceWithReference(seq, g1, g2)
 
-          // Look up full texts
-          const text1 =
-            comparedVerses[g1]?.find((v) => v.verse === seq.verse1)
-              ?.scripture || ''
-          const text2 =
-            comparedVerses[g2]?.find((v) => v.verse === seq.verse2)
-              ?.scripture || ''
+          const verse1 = comparedVerses[g1]?.find(
+            (verse) => verse.verse === seq.verse1
+          )
+          const verse2 = comparedVerses[g2]?.find(
+            (verse) => verse.verse === seq.verse2
+          )
+          const text1 = verse1?.text || verse1?.scripture || ''
+          const text2 = verse2?.text || verse2?.scripture || ''
           const trans =
             translationVerses[g1]?.find((v) => v.verse === seq.verse1)
               ?.scripture || ''
 
           return (
             <div
-              key={idx}
+              key={`${seq.start1}-${seq.start2}-${seq.length}-${idx}`}
               className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm"
             >
               <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-50 dark:border-slate-800">
@@ -217,11 +218,14 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
   const [mode, setMode] = useState('exact')
   const [selectedPair, setSelectedPair] = useState('matthew-luke')
 
-  // Compute statistics when section, minLength or mode changes
   const [translationVerses, setTranslationVerses] = useState({})
-  const [comparedVerses, setComparedVerses] = useState({})
+  const comparedVerses = useMemo(() => {
+    const passages = currentSection?.passages || []
+    return Object.fromEntries(
+      passages.map((passage) => [passage.gospel, passage.verses || []])
+    )
+  }, [currentSection])
 
-  // Compute statistics when section, minLength or mode changes
   const {
     results,
     isLoading,
@@ -232,27 +236,16 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
   } = useStatisticsWorker({
     minLength,
     mode,
-    translationVersion: 'ACF', // Default translation
-    deps: [currentSection, minLength, mode],
+    translationVersion: 'ACF',
   })
 
-  // Fetch translation verses and compared verses on-demand
   useEffect(() => {
     if (!currentSection) return
 
-    // Organize compared verses from currentSection
-    const compared = {}
-    currentSection.passages?.forEach((p) => {
-      compared[p.gospel] = p.verses || []
-    })
-    setComparedVerses(compared)
-
-    // Fetch translation verses if version is selected
     if (translationVersion) {
       const querySegments = currentSection.passages
         ?.map((p) => {
-          // Reconstruct segment from passage reference
-          // Handle "Matthew 1:1" or "Matthew 1:1-8" or "1 John 1:1"
+          if (!p.reference) return null
           const match = p.reference.match(
             /^(\d?\s?[\w\s]+)\s+(\d+):(\d+)(?:-(\d+))?$/
           )
@@ -277,7 +270,6 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
       if (querySegments?.length > 0) {
         fetchVerses(querySegments, translationVersion)
           .then((data) => {
-            // Find the key that isn't jobId or status
             const label = Object.keys(data).find(
               (k) => k !== 'jobId' && k !== 'status' && !k.startsWith('_')
             )
@@ -301,8 +293,6 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
           })
           .catch((err) => console.error('Failed to fetch translation:', err))
       }
-    } else {
-      setTranslationVerses({})
     }
   }, [currentSection, translationVersion])
 
@@ -313,7 +303,17 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
   }, [currentSection, minLength, mode, computeSectionStats])
 
   const currentStats = results
-  const pairSequences = currentStats?.pairs?.[selectedPair]?.sequences || []
+  const availablePairs = Object.keys(currentStats?.pairs || {})
+  const activePair = currentStats?.pairs?.[selectedPair]
+    ? selectedPair
+    : availablePairs[0] || selectedPair
+  const pairSequences = currentStats?.pairs?.[activePair]?.sequences || []
+
+  const handleTranslationVersionChange = (event) => {
+    const version = event.target.value
+    setTranslationVersion(version)
+    if (!version) setTranslationVerses({})
+  }
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
@@ -353,7 +353,7 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
 
         {/* Controls */}
         <div className="px-4 pb-3 flex flex-wrap items-center gap-6">
-          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+          <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
             <button
               onClick={() => setMode('exact')}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
@@ -374,6 +374,20 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
             >
               {t('stats.relaxed')}
             </button>
+            <label className="ml-3 flex items-center gap-2 border-l border-slate-200 pl-3 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-400">
+              {t('stats.min_words')}
+              <select
+                value={minLength}
+                onChange={(event) => setMinLength(Number(event.target.value))}
+                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              >
+                {[2, 3, 4, 5, 6].map((length) => (
+                  <option key={length} value={length}>
+                    {length}
+                  </option>
+                ))}
+              </select>
+            </label>
             <div className="flex items-center gap-2 ml-4 border-l border-slate-200 dark:border-slate-700 pl-4">
               <label className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
                 <Languages size={14} className="text-indigo-500" />
@@ -381,7 +395,7 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
               </label>
               <select
                 value={translationVersion || ''}
-                onChange={(e) => setTranslationVersion(e.target.value)}
+                onChange={handleTranslationVersionChange}
                 className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">None</option>
@@ -451,14 +465,19 @@ function StatisticsPage({ currentSection, selectedVersion, onBack }) {
                 {/* Pair Comparisons */}
                 <PairComparison
                   stats={currentStats}
-                  selectedPair={selectedPair}
+                  selectedPair={activePair}
                   onSelectPair={setSelectedPair}
+                />
+
+                <AlignedTextComparison
+                  pair={activePair}
+                  versesByGospel={comparedVerses}
                 />
 
                 {/* Selected Pair Sequences */}
                 <SequencesList
                   sequences={pairSequences}
-                  pair={selectedPair}
+                  pair={activePair}
                   comparedVerses={comparedVerses}
                   translationVerses={translationVerses}
                   translationVersion={translationVersion}

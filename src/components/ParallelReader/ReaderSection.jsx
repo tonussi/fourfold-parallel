@@ -12,7 +12,10 @@ export default function ReaderSection({
   getPassageForGospel,
   highlightedWord,
   onWordClick,
+  textAlignment,
   loading,
+  loadFailed,
+  onRetry,
 }) {
   if (isMobile) {
     return (
@@ -26,7 +29,10 @@ export default function ReaderSection({
         getPassageForGospel={getPassageForGospel}
         highlightedWord={highlightedWord}
         onWordClick={onWordClick}
+        textAlignment={textAlignment}
         loading={loading}
+        loadFailed={loadFailed}
+        onRetry={onRetry}
       />
     )
   }
@@ -45,7 +51,10 @@ export default function ReaderSection({
                 verses={passage.verses}
                 highlightedWord={highlightedWord}
                 onWordClick={onWordClick}
+                textAlignment={textAlignment}
                 loading={loading}
+                loadFailed={loadFailed}
+                onRetry={onRetry}
               />
             )
           })}
