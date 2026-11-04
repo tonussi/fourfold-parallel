@@ -1,4 +1,5 @@
 import React from 'react'
+import { buildNoteContextId } from '@src/utils/noteUtils'
 
 const TOKEN_PATTERN = /([\p{L}\p{M}\p{N}]+)/gu
 const WORD_PATTERN = /^[\p{L}\p{M}\p{N}]+$/u
@@ -10,7 +11,7 @@ const normalizeWord = (word) =>
     .replace(DIACRITIC_PATTERN, '')
     .toLocaleLowerCase()
 
-export default function VerseText({ text, highlightedWord, onWordClick, context }) {
+export default function VerseText({ text, highlightedWord, onWordClick, context, hasNote }) {
   if (!text) return null
 
   const tokens = text.split(TOKEN_PATTERN)
@@ -26,6 +27,7 @@ export default function VerseText({ text, highlightedWord, onWordClick, context 
         if (isWord) {
           const normalizedToken = normalizeWord(token)
           const isHighlighted = normalizedHighlighted === normalizedToken
+          const wordContext = context ? { ...context, word: token } : null
           const toggleWord = (event) => {
             event?.stopPropagation()
             const selectedWord = isHighlighted ? null : token
@@ -63,6 +65,11 @@ export default function VerseText({ text, highlightedWord, onWordClick, context 
               `}
             >
               {token}
+              {wordContext && hasNote?.(buildNoteContextId(wordContext)) && (
+                <sup className="ml-0.5 align-super text-[9px] font-black text-indigo-500 dark:text-indigo-300" aria-label="Nota salva">
+                  n
+                </sup>
+              )}
             </span>
           )
         }

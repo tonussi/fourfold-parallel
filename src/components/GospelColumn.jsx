@@ -3,6 +3,7 @@ import { ScrollText, BookOpen, Bookmark, Share2 } from 'lucide-react'
 import VerseText from './VerseText'
 import { Skeleton, GospelColumnSkeleton } from './Skeleton'
 import LoadFailedNotice from './LoadFailedNotice'
+import { buildNoteContextId } from '@src/utils/noteUtils'
 
 export default function GospelColumn({
   gospel,
@@ -12,6 +13,7 @@ export default function GospelColumn({
   onWordClick,
   onSessionClick,
   sectionTitle,
+  hasNote,
   textAlignment = 'left',
   loading = false,
   loadFailed = false,
@@ -71,6 +73,13 @@ export default function GospelColumn({
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white">
               {config.title}
+              {hasNote?.(
+                buildNoteContextId({ gospel: config.title, reference, sectionTitle })
+              ) && (
+                <sup className="ml-1 align-super text-[10px] font-black text-indigo-500 dark:text-indigo-300">
+                  n
+                </sup>
+              )}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {config.subtitle}
@@ -158,6 +167,7 @@ export default function GospelColumn({
                     })
                   }
                   context={{ gospel: config.title, reference, verse: verse.verse, sectionTitle }}
+                  hasNote={hasNote}
                 />
               </p>
             ))}

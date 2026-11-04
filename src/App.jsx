@@ -25,6 +25,7 @@ import {
   selectTextAlignment,
   setTextAlignment,
   selectImportedData,
+  selectNotes,
   cacheVerses,
 } from '@src/store'
 
@@ -118,6 +119,7 @@ function ParallelReader() {
   const verseFontSize = useSelector(selectVerseFontSize)
   const textAlignment = useSelector(selectTextAlignment)
   const importedData = useSelector(selectImportedData)
+  const notes = useSelector(selectNotes)
 
   // Update verse font CSS variable when selected font changes
   useEffect(() => {
@@ -455,6 +457,11 @@ function ParallelReader() {
     [currentSection?.title, t]
   )
 
+  const hasNote = useCallback(
+    (noteContextId) => notes.some((note) => note.contextId === noteContextId),
+    [notes]
+  )
+
   return (
     <>
       <Header
@@ -505,6 +512,7 @@ function ParallelReader() {
             }}
             onSessionClick={openNote}
             sectionTitle={currentSection?.title}
+            hasNote={hasNote}
               textAlignment={textAlignment}
               loading={isLoadingVerses}
               loadFailed={loadFailed}

@@ -3,11 +3,7 @@ import { Brain, ExternalLink, Save, Trash2, X } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { deleteNote, saveNote, selectNotes } from '@src/store'
-
-const contextId = (context) =>
-  [context.sectionTitle, context.gospel, context.reference, context.verse, context.word]
-    .filter(Boolean)
-    .join('::')
+import { buildNoteContextId } from '@src/utils/noteUtils'
 
 const buildPrompt = (note) =>
   [
@@ -24,7 +20,7 @@ export default function NoteEditor({ context, onClose }) {
   const { t } = useTranslation()
   const dispatch = useDispatch()
   const notes = useSelector(selectNotes)
-  const noteKey = contextId(context)
+  const noteKey = buildNoteContextId(context)
   const existingNote = useMemo(
     () => notes.find((note) => note.contextId === noteKey),
     [notes, noteKey]

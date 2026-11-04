@@ -14,6 +14,7 @@ export default function ReaderSection({
   onWordClick,
   onSessionClick,
   sectionTitle,
+  hasNote,
   textAlignment,
   loading,
   loadFailed,
@@ -32,6 +33,7 @@ export default function ReaderSection({
         highlightedWord={highlightedWord}
         onWordClick={onWordClick}
         onSessionClick={onSessionClick}
+        hasNote={hasNote}
         textAlignment={textAlignment}
         loading={loading}
         loadFailed={loadFailed}
@@ -56,6 +58,7 @@ export default function ReaderSection({
                 onWordClick={onWordClick}
                 onSessionClick={onSessionClick}
                 sectionTitle={sectionTitle}
+                hasNote={hasNote}
                 textAlignment={textAlignment}
                 loading={loading}
                 loadFailed={loadFailed}

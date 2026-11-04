@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import VerseText from './VerseText'
 import { Skeleton, GospelColumnSkeleton } from './Skeleton'
 import LoadFailedNotice from './LoadFailedNotice'
+import { buildNoteContextId } from '@src/utils/noteUtils'
 
 export default function MobileGospelTabs({
   gospels,
@@ -15,6 +16,7 @@ export default function MobileGospelTabs({
   highlightedWord,
   onWordClick,
   onSessionClick,
+  hasNote,
   textAlignment = 'left',
   loading = false,
   loadFailed = false,
@@ -218,6 +220,17 @@ export default function MobileGospelTabs({
                   className={`font-bold text-lg ${config.textColor} ${config.darkTextColor}`}
                 >
                   {config.title}
+                  {hasNote?.(
+                    buildNoteContextId({
+                      gospel: config.title,
+                      reference: passage.reference,
+                      sectionTitle: currentSection?.title,
+                    })
+                  ) && (
+                    <sup className="ml-1 align-super text-[10px] font-black text-indigo-500 dark:text-indigo-300">
+                      n
+                    </sup>
+                  )}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {config.subtitle}

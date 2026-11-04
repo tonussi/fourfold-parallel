@@ -47,17 +47,19 @@ export default function SectionNav({
           </button>
 
           {/* Section Selector Dropdown */}
-          <div className="flex-1 min-w-0 relative">
+          <div className="relative min-w-0 flex-1">
             <select
               value={currentIndex}
               onChange={(e) => onSelect(Number(e.target.value))}
-              className="w-full appearance-none bg-slate-100 dark:bg-slate-800
-                       text-slate-900 dark:text-white
-                       pl-3 pr-10 py-2.5 rounded-xl text-xs font-bold
-                       focus:outline-none border-none cursor-pointer truncate text-center"
+              title={sections[currentIndex]?.title}
+              className="w-full min-w-0 appearance-none rounded-xl border border-slate-200 bg-slate-50
+                       py-2 pl-3 pr-10 text-left text-[11px] font-bold text-slate-800
+                       shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20
+                       dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-100 dark:focus:border-indigo-500
+                       overflow-hidden text-ellipsis whitespace-nowrap"
             >
               {sections.map((section, index) => (
-                <option key={section.id} value={index}>
+                <option key={section.id} value={index} title={section.title}>
                   {index + 1}. {section.title}
                 </option>
               ))}
@@ -185,14 +187,15 @@ export default function SectionNav({
               <select
                 value={currentIndex}
                 onChange={(e) => onSelect(Number(e.target.value))}
-                className="appearance-none bg-slate-100 dark:bg-slate-800 
-                         text-slate-900 dark:text-white 
-                         pl-5 pr-14 py-3 rounded-xl text-base font-semibold 
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500 
-                         min-w-[320px] text-center cursor-pointer"
+                title={sections[currentIndex]?.title}
+                className="min-w-[260px] max-w-[min(42vw,420px)] appearance-none rounded-xl border border-slate-200 bg-slate-50
+                         py-2.5 pl-4 pr-14 text-left text-sm font-semibold text-slate-800 shadow-sm
+                         outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20
+                         dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 cursor-pointer
+                         overflow-hidden text-ellipsis whitespace-nowrap"
               >
                 {sections.map((section, index) => (
-                  <option key={section.id} value={index}>
+                  <option key={section.id} value={index} title={section.title}>
                     {index + 1}. {section.title}
                   </option>
                 ))}
