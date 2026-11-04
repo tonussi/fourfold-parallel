@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { Download, FileUp } from 'lucide-react'
 import FileImport from '@src/components/FileImport'
-import ConfirmExampleImportDialog from '@src/components/ConfirmExampleImportDialog'
 import { EXAMPLES, transformData } from '@src/utils/bibleHelpers'
 import {
   isSmartphoneViewport,
@@ -23,7 +22,6 @@ export default function SettingsSection() {
   const { t } = useTranslation()
   const dispatch = useDispatch()
   const importedData = useSelector(selectImportedData)
-  const [pendingExample, setPendingExample] = useState(null)
   const [exampleLoading, setExampleLoading] = useState(false)
   const [exampleError, setExampleError] = useState(null)
 
@@ -72,31 +70,29 @@ export default function SettingsSection() {
       return
     }
 
-    setExampleError(null)
-    setPendingExample(example)
-  }
-
-  const closeExampleDialog = () => {
     if (exampleLoading) return
-    setPendingExample(null)
     setExampleError(null)
+    setExampleLoading(true)
+    loadExampleData(example)
+      .then(handleImport)
+      .catch((error) => {
+        console.error('Unable to load suggested file:', error)
+        setExampleError(t('import.example_load_error'))
+      })
+      .finally(() => setExampleLoading(false))
   }
 
-  const confirmExampleImport = async () => {
-    if (!pendingExample || exampleLoading) return
-
-    setExampleLoading(true)
-    setExampleError(null)
-    try {
-      handleImport(await loadExampleData(pendingExample))
-      setPendingExample(null)
-    } catch (error) {
-      console.error('Unable to load suggested file:', error)
-      setExampleError(t('import.example_load_error'))
-    } finally {
-      setExampleLoading(false)
+  const handleExampleKeyDown = (event, example) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      handleExampleClick(example)
     }
   }
+
+  const exampleButtonLabel = (example) =>
+    isSmartphoneViewport()
+      ? t('app.tap_to_load')
+      : t('app.open_example', { name: example.name })
 
   return (
     <div className="h-[calc(100vh-220px)] md:h-[calc(100vh-200px)] overflow-y-auto p-4 lg:p-6 mb-16 md:mb-0">
@@ -123,11 +119,18 @@ export default function SettingsSection() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
             {t('app.examples_description')}
           </p>
+          {exampleError && (
+            <p role="alert" className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+              {exampleError}
+            </p>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {EXAMPLES.map((example) => (
               <button
                 key={example.file}
                 onClick={() => handleExampleClick(example)}
+                onKeyDown={(event) => handleExampleKeyDown(event, example)}
+                disabled={exampleLoading}
                 className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 transition-all text-left group"
                 title={example.tooltip}
                 aria-label={t('app.open_example', { name: example.name })}
@@ -147,7 +150,7 @@ export default function SettingsSection() {
                     )}
                   </div>
                   <p className="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 sm:hidden">
-                    {t('app.tap_to_load')}
+                    {exampleButtonLabel(example)}
                   </p>
                 </div>
                 <FileUp
@@ -208,13 +211,6 @@ export default function SettingsSection() {
           </button>
         </div>
       </div>
-      <ConfirmExampleImportDialog
-        example={pendingExample}
-        loading={exampleLoading}
-        error={exampleError}
-        onConfirm={confirmExampleImport}
-        onClose={closeExampleDialog}
-      />
     </div>
   )
 }

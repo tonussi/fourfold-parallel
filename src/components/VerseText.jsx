@@ -10,7 +10,7 @@ const normalizeWord = (word) =>
     .replace(DIACRITIC_PATTERN, '')
     .toLocaleLowerCase()
 
-export default function VerseText({ text, highlightedWord, onWordClick }) {
+export default function VerseText({ text, highlightedWord, onWordClick, context }) {
   if (!text) return null
 
   const tokens = text.split(TOKEN_PATTERN)
@@ -26,7 +26,15 @@ export default function VerseText({ text, highlightedWord, onWordClick }) {
         if (isWord) {
           const normalizedToken = normalizeWord(token)
           const isHighlighted = normalizedHighlighted === normalizedToken
-          const toggleWord = () => onWordClick(isHighlighted ? null : token)
+          const toggleWord = (event) => {
+            event?.stopPropagation()
+            const selectedWord = isHighlighted ? null : token
+            if (context) {
+              onWordClick(selectedWord, context)
+            } else {
+              onWordClick(selectedWord)
+            }
+          }
           const handleKeyDown = (event) => {
             if (event.key !== 'Enter' && event.key !== ' ') return
 

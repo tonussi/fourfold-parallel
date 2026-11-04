@@ -10,6 +10,8 @@ export default function GospelColumn({
   verses,
   highlightedWord,
   onWordClick,
+  onSessionClick,
+  sectionTitle,
   textAlignment = 'left',
   loading = false,
   loadFailed = false,
@@ -111,7 +113,16 @@ export default function GospelColumn({
       </div>
 
       {/* Verses Content */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin p-3 sm:p-4">
+      <div
+        className="flex-1 overflow-y-auto scrollbar-thin p-3 sm:p-4"
+        onClick={() =>
+          onSessionClick({
+            gospel: config.title,
+            reference,
+            sectionTitle,
+          })
+        }
+      >
         {loading ? (
           <GospelColumnSkeleton />
         ) : loadFailed && !hasVerses ? (
@@ -137,7 +148,16 @@ export default function GospelColumn({
                 <VerseText
                   text={verse.text}
                   highlightedWord={highlightedWord}
-                  onWordClick={onWordClick}
+                  onWordClick={(word, context) =>
+                    onWordClick(word, {
+                      ...context,
+                      gospel: config.title,
+                      reference,
+                      verse: verse.verse,
+                      sectionTitle,
+                    })
+                  }
+                  context={{ gospel: config.title, reference, verse: verse.verse, sectionTitle }}
                 />
               </p>
             ))}

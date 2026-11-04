@@ -14,6 +14,7 @@ export default function MobileGospelTabs({
   getPassageForGospel,
   highlightedWord,
   onWordClick,
+  onSessionClick,
   textAlignment = 'left',
   loading = false,
   loadFailed = false,
@@ -201,6 +202,11 @@ export default function MobileGospelTabs({
         >
           {/* Header Card */}
           <div
+            onClick={() => onSessionClick({
+              gospel: config.title,
+              reference: passage.reference,
+              sectionTitle: currentSection?.title,
+            })}
             className={`
             px-4 py-3 border-b border-slate-100 dark:border-slate-800
             ${config.lightBg} ${config.darkBg}
@@ -299,7 +305,21 @@ export default function MobileGospelTabs({
                     <VerseText
                       text={verse.text}
                       highlightedWord={highlightedWord}
-                      onWordClick={onWordClick}
+                      onWordClick={(word, context) =>
+                        onWordClick(word, {
+                          ...context,
+                          gospel: config.title,
+                          reference: passage.reference,
+                          verse: verse.verse,
+                          sectionTitle: currentSection?.title,
+                        })
+                      }
+                      context={{
+                        gospel: config.title,
+                        reference: passage.reference,
+                        verse: verse.verse,
+                        sectionTitle: currentSection?.title,
+                      }}
                     />
                   </p>
                 ))}

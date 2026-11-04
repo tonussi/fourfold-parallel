@@ -19,12 +19,7 @@ vi.mock('react-i18next', () => ({
       const translations = {
         'app.open_example': `Abrir modelo ${values?.name}`,
         'app.tap_to_load': 'Toque para carregar',
-        'import.example_confirm_title': 'Carregar arquivo sugerido?',
-        'import.example_confirm_description': `Você deseja carregar o arquivo "${values?.name}"?`,
-        'import.example_confirm_action': 'Sim, carregar',
-        'import.cancel': 'Cancelar',
-        'import.processing': 'Processando...',
-        'common.close': 'Fechar',
+        'import.example_load_error': 'Não foi possível carregar o arquivo sugerido.',
       }
       return translations[key] || key
     },
@@ -50,7 +45,7 @@ describe('SettingsSection suggested files', () => {
     })
   })
 
-  it('asks for confirmation and automatically imports on smartphones', async () => {
+  it('automatically imports on smartphones after one tap', async () => {
     render(<SettingsSection />)
 
     fireEvent.click(
@@ -58,17 +53,10 @@ describe('SettingsSection suggested files', () => {
         name: 'Abrir modelo The Complete Gospels (Q)',
       })
     )
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Sim, carregar' }))
-
     await waitFor(() => {
       expect(mocks.loadExampleData).toHaveBeenCalledWith(
         expect.objectContaining({ file: 'TheCompleteGospels-Q.csv' })
       )
-    })
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
     expect(mocks.dispatch).toHaveBeenCalled()
   })

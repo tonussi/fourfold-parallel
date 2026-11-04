@@ -43,6 +43,7 @@ const PersistLoading = () => (
  * - Preferred Bible version is remembered
  * - Dark mode preference is saved
  * - Current section index is restored
+ * - Imported parallel reading data is restored after refresh
  *
  * Data is cleared when the browser tab is closed.
  */

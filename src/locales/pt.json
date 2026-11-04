@@ -71,6 +71,14 @@
     "example_confirm_action": "Sim, carregar",
     "example_load_error": "Não foi possível carregar o arquivo sugerido."
   },
+  "notes": {
+    "title": "Nota de estudo",
+    "placeholder": "Escreva sua observação sobre este texto...",
+    "save": "Salvar nota",
+    "delete": "Excluir nota",
+    "open_claude": "Abrir no Claude",
+    "open_chatgpt": "Abrir no ChatGPT"
+  },
   "app": {
     "current_session": "Sessão Atual",
     "source": "Fonte",

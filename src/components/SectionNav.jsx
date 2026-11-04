@@ -99,19 +99,19 @@ export default function SectionNav({
         </div>
 
         {/* Row 2: Secondary Controls (Font, Version and Alignment) */}
-        <div className="flex items-end justify-center gap-3 px-3 py-2 border-t border-slate-100 dark:border-slate-800/50 mt-2">
+        <div className="grid grid-cols-3 items-end gap-2 px-3 py-3 border-t border-slate-100 dark:border-slate-800/50 mt-2">
           {/* Font Selector */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-              {t('nav.font')}:
+          <div className="flex min-w-0 flex-col items-center gap-1">
+            <span className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
+              {t('nav.font')}
             </span>
-            <div className="relative">
+            <div className="relative w-full">
               <select
                 value={selectedFont}
                 onChange={(e) => onFontChange(e.target.value)}
-                className="appearance-none bg-slate-100 dark:bg-slate-800 
+                className="w-full appearance-none bg-slate-100 dark:bg-slate-800
                          text-slate-900 dark:text-white 
-                         pl-7 pr-3 py-1.5 rounded-lg text-xs font-bold 
+                         pl-7 pr-2 py-2 rounded-lg text-xs font-bold
                          focus:outline-none border-none cursor-pointer"
                 aria-label={t('nav.font')}
               >
@@ -138,17 +138,17 @@ export default function SectionNav({
           </div>
 
           {/* Version Selector */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-              {t('nav.version')}:
+          <div className="flex min-w-0 flex-col items-center gap-1">
+            <span className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
+              {t('nav.version')}
             </span>
-            <div className="relative">
+            <div className="relative w-full">
               <select
                 value={selectedVersion}
                 onChange={(e) => onVersionChange(e.target.value)}
-                className="appearance-none bg-indigo-50 dark:bg-indigo-900/20 
+                className="w-full appearance-none bg-indigo-50 dark:bg-indigo-900/20
                          text-indigo-600 dark:text-indigo-400 
-                         px-3 py-1.5 rounded-lg text-xs font-bold 
+                         px-2 py-2 rounded-lg text-xs font-bold
                          focus:outline-none border border-indigo-100 dark:border-indigo-800/30 cursor-pointer"
               >
                 {Object.entries(versions).map(([key, value]) => (
@@ -161,21 +161,6 @@ export default function SectionNav({
           </div>
         </div>
 
-        {/* Quick dot navigation */}
-        <div className="flex items-center justify-center gap-1 px-4 pb-2 overflow-x-auto scrollbar-hide max-w-full">
-          {sections.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => onSelect(index)}
-              className={`h-1.5 rounded-full transition-all duration-300 min-w-0 min-h-0 shrink-0 ${
-                index === currentIndex
-                  ? 'w-6 bg-indigo-600 dark:bg-indigo-400'
-                  : 'w-1.5 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
-              }`}
-              aria-label={t('nav.go_to_section', { index: index + 1 })}
-            />
-          ))}
-        </div>
       </div>
 
       {/* Desktop: Fuller version */}

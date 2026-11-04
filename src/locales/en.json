@@ -72,6 +72,14 @@
     "example_confirm_action": "Yes, load",
     "example_load_error": "The suggested file could not be loaded."
   },
+  "notes": {
+    "title": "Study note",
+    "placeholder": "Write your observation about this text...",
+    "save": "Save note",
+    "delete": "Delete note",
+    "open_claude": "Open in Claude",
+    "open_chatgpt": "Open in ChatGPT"
+  },
   "app": {
     "current_session": "Current Session",
     "source": "Source",

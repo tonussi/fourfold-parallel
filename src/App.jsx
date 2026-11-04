@@ -66,6 +66,7 @@ import BookmarksSection from '@src/components/ParallelReader/BookmarksSection'
 import SettingsSection from '@src/components/ParallelReader/SettingsSection'
 import Footer from '@src/components/ParallelReader/Footer'
 import AIModal from '@src/components/ParallelReader/AIModal'
+import NoteEditor from '@src/components/NoteEditor'
 import './App.css'
 
 function ParallelReader() {
@@ -78,6 +79,7 @@ function ParallelReader() {
   const [loadFailed, setLoadFailed] = useState(false)
   const [highlightedWord, setHighlightedWord] = useState(null)
   const [isAIModalOpen, setIsAIModalOpen] = useState(false)
+  const [noteContext, setNoteContext] = useState(null)
   const loadAbortRef = useRef(null)
   const { setSidebarContent, setTitle } = useSidebar()
 
@@ -408,6 +410,16 @@ function ParallelReader() {
     }
   }, [currentSection, sectionVerses])
 
+  const openNote = useCallback(
+    (context) => {
+      setNoteContext({
+        sectionTitle: currentSection?.title || t('common.read'),
+        ...context,
+      })
+    },
+    [currentSection?.title, t]
+  )
+
   return (
     <>
       <Header
@@ -452,7 +464,12 @@ function ParallelReader() {
               currentSection={currentSection}
               getPassageForGospel={getPassageForGospel}
               highlightedWord={highlightedWord}
-              onWordClick={setHighlightedWord}
+            onWordClick={(word, context) => {
+              setHighlightedWord(word)
+              if (word && context) openNote({ ...context, word })
+            }}
+            onSessionClick={openNote}
+            sectionTitle={currentSection?.title}
               textAlignment={textAlignment}
               loading={isLoadingVerses}
               loadFailed={loadFailed}
@@ -478,6 +495,9 @@ function ParallelReader() {
         onClose={() => setIsAIModalOpen(false)}
         currentSection={mergedCurrentSection}
       />
+      {noteContext && (
+        <NoteEditor context={noteContext} onClose={() => setNoteContext(null)} />
+      )}
     </>
   )
 }

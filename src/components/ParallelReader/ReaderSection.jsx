@@ -12,6 +12,8 @@ export default function ReaderSection({
   getPassageForGospel,
   highlightedWord,
   onWordClick,
+  onSessionClick,
+  sectionTitle,
   textAlignment,
   loading,
   loadFailed,
@@ -29,6 +31,7 @@ export default function ReaderSection({
         getPassageForGospel={getPassageForGospel}
         highlightedWord={highlightedWord}
         onWordClick={onWordClick}
+        onSessionClick={onSessionClick}
         textAlignment={textAlignment}
         loading={loading}
         loadFailed={loadFailed}
@@ -51,6 +54,8 @@ export default function ReaderSection({
                 verses={passage.verses}
                 highlightedWord={highlightedWord}
                 onWordClick={onWordClick}
+                onSessionClick={onSessionClick}
+                sectionTitle={sectionTitle}
                 textAlignment={textAlignment}
                 loading={loading}
                 loadFailed={loadFailed}

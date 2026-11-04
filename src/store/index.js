@@ -48,6 +48,7 @@ import aiReducer, {
   setActiveLanguage,
   resetAI,
 } from './aiSlice'
+import notesReducer, { saveNote, deleteNote } from './notesSlice'
 
 // Persist config for verses slice (sessionStorage)
 const versesPersistConfig = {
@@ -67,6 +68,7 @@ const configPersistConfig = {
     'darkMode',
     'currentSectionIndex',
     'textAlignment',
+    'importedData',
   ],
 }
 
@@ -77,15 +79,23 @@ const aiPersistConfig = {
   storage: localStorageEngine,
 }
 
+const notesPersistConfig = {
+  key: 'fourfold-notes-root',
+  version: 1,
+  storage: localStorageEngine,
+}
+
 const persistedVersesReducer = persistReducer(versesPersistConfig, versesReducer)
 const persistedConfigReducer = persistReducer(configPersistConfig, configReducer)
 const persistedAiReducer = persistReducer(aiPersistConfig, aiReducer)
+const persistedNotesReducer = persistReducer(notesPersistConfig, notesReducer)
 
 // Combine reducers (can add more slices here)
 const rootReducer = combineReducers({
   verses: persistedVersesReducer,
   config: persistedConfigReducer,
   ai: persistedAiReducer,
+  notes: persistedNotesReducer,
 })
 
 // Configure store
@@ -121,6 +131,7 @@ export const selectSelectedFont = (state) => state.config.selectedFont
 export const selectTextAlignment = (state) => state.config.textAlignment
 export const selectImportedData = (state) => state.config.importedData
 export const selectImportState = (state) => state.config.importState
+export const selectNotes = (state) => state.notes.notes
 
 // AI selectors
 export {
@@ -172,6 +183,8 @@ export {
   setActivePrompt,
   setActiveLanguage,
   resetAI,
+  saveNote,
+  deleteNote,
 }
 
 // Flush persistence (useful for logout)
