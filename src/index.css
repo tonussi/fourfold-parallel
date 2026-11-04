@@ -108,6 +108,7 @@
   
   .verse-font {
     font-family: var(--verse-font-family);
+    font-size: var(--verse-font-size, 16px);
   }
   
   .verse-text {

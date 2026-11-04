@@ -7,6 +7,7 @@ const initialState = {
   currentSectionIndex: 0,
   activeGospelTab: 'matthew',
   selectedFont: 'serif',
+  verseFontSize: 16,
   textAlignment: 'left',
   importedData: null,
   importState: {
@@ -41,6 +42,15 @@ const configSlice = createSlice({
     },
     setSelectedFont: (state, action) => {
       state.selectedFont = action.payload
+    },
+    setVerseFontSize: (state, action) => {
+      state.verseFontSize = Math.min(24, Math.max(12, action.payload))
+    },
+    increaseVerseFontSize: (state) => {
+      state.verseFontSize = Math.min(24, state.verseFontSize + 2)
+    },
+    decreaseVerseFontSize: (state) => {
+      state.verseFontSize = Math.max(12, state.verseFontSize - 2)
     },
     setTextAlignment: (state, action) => {
       state.textAlignment = action.payload
@@ -89,6 +99,7 @@ export const selectCurrentSectionIndex = (state) =>
   state.config.currentSectionIndex
 export const selectActiveGospelTab = (state) => state.config.activeGospelTab
 export const selectSelectedFont = (state) => state.config.selectedFont
+export const selectVerseFontSize = (state) => state.config.verseFontSize
 export const selectTextAlignment = (state) => state.config.textAlignment
 export const selectImportedData = (state) => state.config.importedData
 export const selectImportState = (state) => state.config.importState
@@ -101,6 +112,9 @@ export const {
   setCurrentSectionIndex,
   setActiveGospelTab,
   setSelectedFont,
+  setVerseFontSize,
+  increaseVerseFontSize,
+  decreaseVerseFontSize,
   setTextAlignment,
   setImportedData,
   startImport,

@@ -18,7 +18,10 @@ import {
   setCurrentSectionIndex,
   setActiveGospelTab,
   selectSelectedFont,
+  selectVerseFontSize,
   setSelectedFont,
+  increaseVerseFontSize,
+  decreaseVerseFontSize,
   selectTextAlignment,
   setTextAlignment,
   selectImportedData,
@@ -112,6 +115,7 @@ function ParallelReader() {
   const currentSectionIndex = useSelector(selectCurrentSectionIndex)
   const activeGospelTab = useSelector(selectActiveGospelTab)
   const selectedFont = useSelector(selectSelectedFont)
+  const verseFontSize = useSelector(selectVerseFontSize)
   const textAlignment = useSelector(selectTextAlignment)
   const importedData = useSelector(selectImportedData)
 
@@ -128,6 +132,35 @@ function ParallelReader() {
       fontMap[selectedFont] || fontMap.serif
     )
   }, [selectedFont])
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--verse-font-size',
+      `${verseFontSize}px`
+    )
+  }, [verseFontSize])
+
+  useEffect(() => {
+    const handleFontHotkey = (event) => {
+      if (!event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) {
+        return
+      }
+
+      const target = event.target
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)) return
+
+      if (event.key === '+' || event.key === '=') {
+        event.preventDefault()
+        dispatch(increaseVerseFontSize())
+      } else if (event.key === '-' || event.key === '_') {
+        event.preventDefault()
+        dispatch(decreaseVerseFontSize())
+      }
+    }
+
+    window.addEventListener('keydown', handleFontHotkey)
+    return () => window.removeEventListener('keydown', handleFontHotkey)
+  }, [dispatch])
 
   // Detect mobile viewport
   useEffect(() => {
