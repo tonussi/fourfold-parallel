@@ -73,6 +73,8 @@
     "example_load_error": "The suggested file could not be loaded."
   },
   "notes": {
+    "menu_title": "Add a note",
+    "add": "+ Note",
     "title": "Study note",
     "placeholder": "Write your observation about this text...",
     "save": "Save note",

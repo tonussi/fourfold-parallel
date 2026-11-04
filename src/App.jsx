@@ -67,6 +67,7 @@ import SettingsSection from '@src/components/ParallelReader/SettingsSection'
 import Footer from '@src/components/ParallelReader/Footer'
 import AIModal from '@src/components/ParallelReader/AIModal'
 import NoteEditor from '@src/components/NoteEditor'
+import NoteActionMenu from '@src/components/NoteActionMenu'
 import './App.css'
 
 function ParallelReader() {
@@ -80,6 +81,7 @@ function ParallelReader() {
   const [highlightedWord, setHighlightedWord] = useState(null)
   const [isAIModalOpen, setIsAIModalOpen] = useState(false)
   const [noteContext, setNoteContext] = useState(null)
+  const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false)
   const loadAbortRef = useRef(null)
   const { setSidebarContent, setTitle } = useSidebar()
 
@@ -496,7 +498,24 @@ function ParallelReader() {
         currentSection={mergedCurrentSection}
       />
       {noteContext && (
-        <NoteEditor context={noteContext} onClose={() => setNoteContext(null)} />
+        <>
+          {!isNoteEditorOpen && (
+            <NoteActionMenu
+              context={noteContext}
+              onAddNote={() => setIsNoteEditorOpen(true)}
+              onClose={() => setNoteContext(null)}
+            />
+          )}
+          {isNoteEditorOpen && (
+            <NoteEditor
+              context={noteContext}
+              onClose={() => {
+                setIsNoteEditorOpen(false)
+                setNoteContext(null)
+              }}
+            />
+          )}
+        </>
       )}
     </>
   )

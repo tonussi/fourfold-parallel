@@ -72,6 +72,8 @@
     "example_load_error": "Não foi possível carregar o arquivo sugerido."
   },
   "notes": {
+    "menu_title": "Adicionar uma anotação",
+    "add": "+ Nota",
     "title": "Nota de estudo",
     "placeholder": "Escreva sua observação sobre este texto...",
     "save": "Salvar nota",
