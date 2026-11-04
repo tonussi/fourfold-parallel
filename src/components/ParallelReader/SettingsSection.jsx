@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import { Download, FileUp } from 'lucide-react'
+import { Download, FileUp, Loader2 } from 'lucide-react'
 import FileImport from '@src/components/FileImport'
 import { EXAMPLES, transformData } from '@src/utils/bibleHelpers'
 import {
@@ -24,6 +24,18 @@ export default function SettingsSection() {
   const importedData = useSelector(selectImportedData)
   const [exampleLoading, setExampleLoading] = useState(false)
   const [exampleError, setExampleError] = useState(null)
+
+  useEffect(() => {
+    if (!exampleLoading) return undefined
+
+    const warnBeforeLeaving = (event) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', warnBeforeLeaving)
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving)
+  }, [exampleLoading])
 
   const displayData = useMemo(
     () => importedData || transformData(parallelData),
@@ -211,6 +223,30 @@ export default function SettingsSection() {
           </button>
         </div>
       </div>
+      {exampleLoading && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/65 p-6 backdrop-blur-sm">
+          <div
+            role="status"
+            aria-live="polite"
+            className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+          >
+            <Loader2
+              size={34}
+              className="mx-auto animate-spin text-indigo-600 dark:text-indigo-400"
+              aria-hidden="true"
+            />
+            <h2 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
+              {t('import.example_loading_title')}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+              {t('import.example_loading_description')}
+            </p>
+            <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+              {t('import.example_loading_warning')}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

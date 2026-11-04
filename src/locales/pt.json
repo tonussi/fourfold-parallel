@@ -69,7 +69,10 @@
     "example_confirm_title": "Carregar arquivo sugerido?",
     "example_confirm_description": "Você deseja carregar o arquivo \"{{name}}\"? Ele será importado automaticamente.",
     "example_confirm_action": "Sim, carregar",
-    "example_load_error": "Não foi possível carregar o arquivo sugerido."
+    "example_load_error": "Não foi possível carregar o arquivo sugerido.",
+    "example_loading_title": "Carregando modelo",
+    "example_loading_description": "Estamos baixando e preparando o CSV para leitura. Aguarde até terminar.",
+    "example_loading_warning": "Não saia desta tela nem atualize a página durante o carregamento."
   },
   "notes": {
     "menu_title": "Adicionar uma anotação",

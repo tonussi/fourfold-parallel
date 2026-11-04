@@ -70,7 +70,10 @@
     "example_confirm_title": "Load suggested file?",
     "example_confirm_description": "Would you like to load \"{{name}}\"? It will be imported automatically.",
     "example_confirm_action": "Yes, load",
-    "example_load_error": "The suggested file could not be loaded."
+    "example_load_error": "The suggested file could not be loaded.",
+    "example_loading_title": "Loading template",
+    "example_loading_description": "We are downloading and preparing the CSV for reading. Please wait until it finishes.",
+    "example_loading_warning": "Do not leave this screen or refresh the page while loading."
   },
   "notes": {
     "menu_title": "Add a note",
